@@ -70,6 +70,13 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(symbols[tile.type] || "?", x + TILE_SIZE / 2, y + TILE_SIZE / 2);
+  if (tile.type === "wall") {
+    const durability = Math.max(0, tile.durability / tile.maxDurability);
+    ctx.fillStyle = "#293f43";
+    ctx.fillRect(x + 8, y + TILE_SIZE - 9, TILE_SIZE - 16, 4);
+    ctx.fillStyle = durability > 0.3 ? "#75b994" : "#d46954";
+    ctx.fillRect(x + 8, y + TILE_SIZE - 9, (TILE_SIZE - 16) * durability, 4);
+  }
   if (tile.mountedBy) {
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;

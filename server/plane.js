@@ -55,6 +55,78 @@ class Plane {
     return this.tiles.flat().some((tile) => tile?.type === "generator" && !tile.broken);
   }
 
+  // Reflect a swept pellet from the first wall it crosses, removing walls after ten hits.
+  receiveProjectile(projectile) {
+    const cos = Math.cos(this.angle);
+    const sin = Math.sin(this.angle);
+    const toLocal = (x, y) => ({
+      x: (x - this.x) * cos + (y - this.y) * sin + (WIDTH - 1) / 2,
+      y: -(x - this.x) * sin + (y - this.y) * cos + (HEIGHT - 1) / 2,
+    });
+    const start = toLocal(projectile.previousX, projectile.previousY);
+    const end = toLocal(projectile.x, projectile.y);
+    const deltaX = end.x - start.x;
+    const deltaY = end.y - start.y;
+    let hit = null;
+
+    for (let row = 0; row < HEIGHT; row++) {
+      for (let col = 0; col < WIDTH; col++) {
+        const wall = this.tiles[row][col];
+        if (wall?.type !== "wall") continue;
+
+        let entry = 0;
+        let exit = 1;
+        let normalX = 0;
+        let normalY = 0;
+        for (const [position, delta, minimum, maximum, axis] of [
+          [start.x, deltaX, col - 0.5, col + 0.5, "x"],
+          [start.y, deltaY, row - 0.5, row + 0.5, "y"],
+        ]) {
+          if (Math.abs(delta) < 1e-10) {
+            if (position < minimum || position > maximum) {
+              entry = Infinity;
+              break;
+            }
+            continue;
+          }
+
+          let near = (minimum - position) / delta;
+          let far = (maximum - position) / delta;
+          let normal = -1;
+          if (near > far) {
+            [near, far] = [far, near];
+            normal = 1;
+          }
+          if (near >= entry) {
+            entry = near;
+            normalX = axis === "x" ? normal : 0;
+            normalY = axis === "y" ? normal : 0;
+          }
+          exit = Math.min(exit, far);
+        }
+        if (entry > exit || entry < 0 || entry > 1 || (!normalX && !normalY)) continue;
+        if (!hit || entry < hit.entry) hit = { entry, normalX, normalY, wall, row, col };
+      }
+    }
+    if (!hit) return false;
+
+    hit.wall.durability -= 1;
+    if (hit.wall.durability <= 0) this.tiles[hit.row][hit.col] = null;
+
+    const hitX = start.x + deltaX * hit.entry;
+    const hitY = start.y + deltaY * hit.entry;
+    const worldNormalX = hit.normalX * cos - hit.normalY * sin;
+    const worldNormalY = hit.normalX * sin + hit.normalY * cos;
+    projectile.x = this.x + (hitX - (WIDTH - 1) / 2) * cos
+      - (hitY - (HEIGHT - 1) / 2) * sin + worldNormalX * 0.01;
+    projectile.y = this.y + (hitX - (WIDTH - 1) / 2) * sin
+      + (hitY - (HEIGHT - 1) / 2) * cos + worldNormalY * 0.01;
+    const normalSpeed = projectile.vx * worldNormalX + projectile.vy * worldNormalY;
+    projectile.vx -= 2 * normalSpeed * worldNormalX;
+    projectile.vy -= 2 * normalSpeed * worldNormalY;
+    return true;
+  }
+
   // Validate a placement and charge the crew before creating its tile.
   build(player, x, y, type, notice) {
     const cost = TILE_COSTS[type];

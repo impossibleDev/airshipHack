@@ -134,3 +134,22 @@ test("broken generators disable turret fire", () => {
   assert.equal(game.projectiles.size, 0);
   assert.deepEqual(notices, ["Weapons offline. Repair a generator to restore ship power."]);
 });
+
+// The simulation tick reflects pellets before they can damage the ship behind a wall.
+test("game tick reflects incoming pellets from a ship wall", () => {
+  const game = new Game({ emit() {} });
+  const defender = new Team("Defender", 0);
+  defender.plane.x = 30;
+  const wall = createTile("wall");
+  defender.plane.tiles[1][2] = wall;
+  const shot = new Projectile(29, 0, 0, "attacker");
+  game.teams.set(defender.id, defender);
+  game.projectiles.set(shot.id, shot);
+
+  game.update();
+
+  assert.equal(wall.durability, 9);
+  assert.ok(shot.vx < 0);
+  assert.equal(defender.plane.health, 100);
+  assert.equal(game.projectiles.has(shot.id), true);
+});

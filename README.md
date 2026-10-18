@@ -47,6 +47,7 @@ joining.
 - The generator powers flight controls and weapons. If it breaks, the plane
   stops and turrets cannot fire; walk to the generator and press **E** to
   repair it. Crew can still walk around the deck while power is offline.
+- Wall tiles reflect turret pellets and can withstand 10 hits before breaking.
 
 Each plane's deck appearance is randomly selected from the three available
 skins.

@@ -3,6 +3,7 @@ const test = require("node:test");
 const Arena = require("../server/arena");
 const Plane = require("../server/plane");
 const Player = require("../server/player");
+const { createTile } = require("../server/tiles");
 
 // The server-selected skin is part of the shared plane snapshot.
 test("plane snapshot includes its server-selected skin", () => {
@@ -54,6 +55,37 @@ test("broken generators disable flight and stop the plane", () => {
   player.setInput({ moveX: 1 });
   plane.update(0.05, [player], () => {});
   assert.ok(player.x > 2);
+});
+
+// Wall tiles reflect pellets and are destroyed after their tenth impact.
+test("wall pellets reflect and reduce wall durability", () => {
+  const plane = new Plane();
+  const wall = createTile("wall");
+  plane.tiles[1][2] = wall;
+  const projectile = {
+    previousX: -1,
+    previousY: 0,
+    x: 1,
+    y: 0,
+    vx: 2,
+    vy: 0,
+  };
+
+  assert.equal(plane.receiveProjectile(projectile), true);
+  assert.equal(wall.durability, 9);
+  assert.ok(projectile.vx < 0);
+  assert.ok(projectile.x < 0);
+
+  for (let hit = 0; hit < 9; hit++) {
+    projectile.previousX = -1;
+    projectile.previousY = 0;
+    projectile.x = 1;
+    projectile.y = 0;
+    projectile.vx = 2;
+    projectile.vy = 0;
+    assert.equal(plane.receiveProjectile(projectile), true);
+  }
+  assert.equal(plane.getTile(2, 1), null);
 });
 
 // Arena collision keeps the hull inside the circle and reflects outward speed.

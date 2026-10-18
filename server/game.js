@@ -235,6 +235,11 @@ class Game {
         this.projectiles.delete(id);
         continue;
       }
+      const hitWall = [...this.teams.values()].some((team) =>
+        team.plane.health > 0 && team.plane.receiveProjectile(shot),
+      );
+      if (hitWall) continue;
+
       for (const team of this.teams.values()) {
         if (team.id !== shot.teamId) {
           const destroyed = team.receiveProjectile(shot, 8);
