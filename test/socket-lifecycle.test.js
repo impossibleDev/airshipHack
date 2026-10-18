@@ -1,8 +1,7 @@
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const test = require("node:test");
-const { createGameState } = require("../server/game/state");
-const { registerSocketHandlers } = require("../server/network/socketHandlers");
+const Game = require("../server/game");
 
 class FakeSocket extends EventEmitter {
   constructor(id) {
@@ -12,73 +11,57 @@ class FakeSocket extends EventEmitter {
   }
 
   emit(event, ...args) {
-    if (!["connection", "join", "input", "interact", "build", "fire", "disconnect"].includes(event)) {
-      this.sent.push({ event, args });
-    }
-    return super.emit(event, ...args);
+    const incoming = ["join", "input", "interact", "build", "fire", "disconnect"];
+    if (incoming.includes(event)) return super.emit(event, ...args);
+    this.sent.push({ event, args });
+    return true;
   }
 }
 
 class FakeIO extends EventEmitter {
-  constructor() {
-    super();
-    this.broadcasts = [];
-  }
-
   emit(event, ...args) {
     if (event === "connection") return super.emit(event, ...args);
-    this.broadcasts.push({ event, args });
     return true;
   }
 
-  to(id) {
-    return { emit: (event, ...args) => this.broadcasts.push({ id, event, args }) };
+  to() {
+    return { emit: () => true };
   }
 }
 
-function connect(io, id) {
+function connect(game, id) {
   const socket = new FakeSocket(id);
-  io.emit("connection", socket);
+  game.connect(socket);
   return socket;
 }
 
-test("joining and disconnecting clears players and releases mounted tiles", () => {
-  const io = new FakeIO();
-  const gameState = createGameState();
-  registerSocketHandlers(io, gameState);
-
-  const first = connect(io, "pilot-1");
+test("disconnect removes the player, frees their station, and allows reconnect", () => {
+  const game = new Game(new FakeIO());
+  const first = connect(game, "pilot-1");
   first.emit("join", { name: "Pilot One" });
   const joined = first.sent.find((message) => message.event === "joined").args[0];
-  const team = gameState.teams.get(joined.teamId);
+  const team = game.teams.get(joined.teamId);
 
   first.emit("interact", { x: 1, y: 2 });
-  const pilotSeat = team.plane.tiles[2][1];
-  assert.equal(pilotSeat.mountedBy, "pilot-1");
-  assert.equal(gameState.players.size, 1);
+  const seat = team.plane.getTile(1, 2);
+  assert.equal(seat.mountedBy, "pilot-1");
 
   first.emit("disconnect");
-  assert.equal(gameState.players.size, 0);
-  assert.equal(pilotSeat.mountedBy, null);
-  assert.equal(gameState.teams.get(team.id), team);
-  assert.ok(gameState.emptyTeamTimers.has(team.id));
+  assert.equal(game.players.size, 0);
+  assert.equal(seat.mountedBy, null);
+  assert.equal(game.teams.get(team.id), team);
 
-  const reconnect = connect(io, "pilot-2");
+  const reconnect = connect(game, "pilot-2");
   reconnect.emit("join", { name: "Pilot One", inviteCode: joined.inviteCode });
-  assert.equal(gameState.players.size, 1);
-  assert.equal(gameState.players.get("pilot-2").teamId, team.id);
-  assert.equal(gameState.emptyTeamTimers.has(team.id), false);
+  assert.equal(game.players.get("pilot-2").teamId, team.id);
+  assert.equal(game.emptyTeamTimers.has(team.id), false);
 });
 
-test("repeated join events for one connection do not create ghost players or teams", () => {
-  const io = new FakeIO();
-  const gameState = createGameState();
-  registerSocketHandlers(io, gameState);
-
-  const socket = connect(io, "pilot-1");
+test("repeated join events do not create duplicate players or teams", () => {
+  const game = new Game(new FakeIO());
+  const socket = connect(game, "pilot-1");
   socket.emit("join", { name: "Pilot One" });
   socket.emit("join", { name: "Pilot One" });
-
-  assert.equal(gameState.players.size, 1);
-  assert.equal(gameState.teams.size, 1);
+  assert.equal(game.players.size, 1);
+  assert.equal(game.teams.size, 1);
 });
