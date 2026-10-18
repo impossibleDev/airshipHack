@@ -27,6 +27,23 @@
     <footer id="status-bar"></footer>
     <!-- Temporary notices are populated by the client when server events arrive. -->
     <div id="toast"></div>
+    <div id="damage-flash" aria-hidden="true"></div>
+    <div id="combat-feedback" aria-live="polite"></div>
+    <button id="help-button" type="button" aria-expanded="false" aria-controls="onboarding">Controls</button>
+    <aside id="onboarding" class="hidden" aria-labelledby="onboarding-title">
+      <div class="onboarding-heading">
+        <h2 id="onboarding-title">Airship controls</h2>
+        <button id="close-onboarding" type="button" aria-label="Close controls">×</button>
+      </div>
+      <ul>
+        <li><kbd>WASD</kbd> Walk around the deck; at the pilot seat, <kbd>W/S</kbd> thrust and <kbd>A/D</kbd> turn.</li>
+        <li><kbd>E</kbd> Use a nearby station or leave the one you are using.</li>
+        <li>At a turret, aim with the mouse and click to fire.</li>
+        <li>Select a build item (or press <kbd>1</kbd>–<kbd>3</kbd>), point at an empty deck tile, then press <kbd>F</kbd>.</li>
+        <li>Repair a broken generator with <kbd>E</kbd>. Hold the capture point to score.</li>
+      </ul>
+      <p>New and respawned crews have 5 seconds of spawn protection.</p>
+    </aside>
     <section id="game-over-screen" class="hidden" aria-live="polite">
       <div class="game-over-card">
         <p class="game-over-eyebrow">CREW DESTROYED</p>

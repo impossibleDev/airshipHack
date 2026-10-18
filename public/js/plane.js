@@ -82,6 +82,16 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
     ctx.fillStyle = "#ede8d9";
     ctx.fillRect(-width / 2, -height / 2, width, height);
   }
+  if (team.spawnProtected) {
+    ctx.strokeStyle = "#a9f4ff";
+    ctx.lineWidth = 3;
+    ctx.shadowColor = "#67dcff";
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, width * 0.58, height * 0.82, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
 
   // Only the local crew needs a live aim target for its mounted turret.
   const localAim = team.id === ownTeamId && pointer.inside

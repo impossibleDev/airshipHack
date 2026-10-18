@@ -44,6 +44,10 @@ joining.
 - If your plane is destroyed, use the **Respawn** button on the game-over
   screen. Your crew and score are kept, but crew members return to the fresh
   plane's deck and its resources and installed tiles reset.
+- New and respawned planes receive 5 seconds of spawn protection, indicated by
+  a blue shield around the ship. Combat feedback shows hull damage, confirmed
+  hits, blocked shots, and collision damage. Open **Controls** in-game to
+  review the controls and basic objectives.
 - The generator powers flight controls and weapons. If it breaks, the plane
   stops and turrets cannot fire; walk to the generator and press **E** to
   repair it. Crew can still walk around the deck while power is offline.

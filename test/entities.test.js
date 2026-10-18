@@ -36,6 +36,7 @@ test("projectile owns movement, arena bounds, and expiry", () => {
 // Plane damage reports its destruction only once.
 test("team owns damage and reports a single plane destruction", () => {
   const team = new Team("Crew", 0);
+  team.spawnProtectedUntil = 0;
   const projectile = { x: team.plane.x, y: team.plane.y };
 
   assert.equal(team.receiveProjectile(projectile, 90), false);
@@ -46,10 +47,20 @@ test("team owns damage and reports a single plane destruction", () => {
 
 // The final hit awards the attacking crew the configured kill score.
 test("destroying an enemy plane awards the attacker 200 score", () => {
-  const game = new Game({ emit() {} });
+  const feedback = [];
+  const game = new Game({
+    emit() {},
+    to(id) {
+      return { emit: (event, payload) => feedback.push({ id, event, payload }) };
+    },
+  });
   const attacker = new Team("Attacker", 0);
   const defender = new Team("Defender", 1);
+  attacker.spawnProtectedUntil = 0;
+  defender.spawnProtectedUntil = 0;
   defender.plane.health = 8;
+  game.players.set("attacker-pilot", new Player("attacker-pilot", "Attacker", attacker.id));
+  game.players.set("defender-pilot", new Player("defender-pilot", "Defender", defender.id));
   game.teams.set(attacker.id, attacker);
   game.teams.set(defender.id, defender);
 
@@ -60,6 +71,10 @@ test("destroying an enemy plane awards the attacker 200 score", () => {
 
   assert.equal(defender.plane.health, 0);
   assert.equal(attacker.score, 200);
+  assert.deepEqual(feedback.map(({ id, payload }) => ({ id, payload })), [
+    { id: "defender-pilot", payload: { type: "damage", amount: 8 } },
+    { id: "attacker-pilot", payload: { type: "hit", amount: 8 } },
+  ]);
 });
 
 // High-speed plane collisions damage both crews and award the destroying crew.
@@ -67,6 +82,8 @@ test("colliding planes take impact damage and award a kill", () => {
   const game = new Game({ emit() {} });
   const attacker = new Team("Attacker", 0);
   const defender = new Team("Defender", 1);
+  attacker.spawnProtectedUntil = 0;
+  defender.spawnProtectedUntil = 0;
   attacker.plane.x = 10;
   defender.plane.x = 14.8;
   attacker.plane.vx = 1;
@@ -108,6 +125,7 @@ test("respawning restores a destroyed plane and resets its crew", () => {
   assert.deepEqual(player.input, {});
   assert.equal(player.x, 2);
   assert.equal(player.y, 2);
+  assert.equal(team.isSpawnProtected(), true);
 });
 
 // Turrets cannot fire without generator power and the pilot gets an explanation.
@@ -152,4 +170,40 @@ test("game tick reflects incoming pellets from a ship wall", () => {
   assert.ok(shot.vx < 0);
   assert.equal(defender.plane.health, 100);
   assert.equal(game.projectiles.has(shot.id), true);
+});
+
+// Fresh crews ignore incoming shots and receive an explicit shield cue.
+test("spawn protection blocks incoming pellets without damage", () => {
+  const feedback = [];
+  const game = new Game({
+    emit() {},
+    to(id) {
+      return { emit: (event, payload) => feedback.push({ id, event, payload }) };
+    },
+  });
+  const attacker = new Team("Attacker", 0);
+  const defender = new Team("Defender", 1);
+  attacker.plane.x = 0;
+  defender.plane.x = 10;
+  const attackerPlayer = new Player("attacker", "Attacker", attacker.id);
+  const defenderPlayer = new Player("defender", "Defender", defender.id);
+  const shot = new Projectile(defender.plane.x - 0.7, defender.plane.y, 0, attacker.id);
+  game.teams.set(attacker.id, attacker);
+  game.teams.set(defender.id, defender);
+  game.players.set(attackerPlayer.id, attackerPlayer);
+  game.players.set(defenderPlayer.id, defenderPlayer);
+  game.projectiles.set(shot.id, shot);
+
+  game.update();
+
+  assert.equal(defender.plane.health, 100);
+  assert.equal(game.projectiles.has(shot.id), false);
+  assert.equal(defender.isSpawnProtected(), true);
+  assert.deepEqual(
+    feedback.map(({ id, event, payload }) => ({ id, event, payload })),
+    [
+      { id: "defender", event: "combat-feedback", payload: { type: "protected" } },
+      { id: "attacker", event: "combat-feedback", payload: { type: "blocked" } },
+    ],
+  );
 });

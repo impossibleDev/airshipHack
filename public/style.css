@@ -28,6 +28,25 @@ button, input { font: inherit; }
 #join-error, #toast { color: #9e342c; }
 #toast { top: 10px; left: 50%; display: none; transform: translateX(-50%); }
 #toast.visible { display: block; }
+/* Give combat events a brief screen cue without blocking player controls. */
+#damage-flash { position: fixed; z-index: 2; inset: 0; opacity: 0; pointer-events: none; }
+#damage-flash.active { animation: damage-flash 420ms ease-out; }
+@keyframes damage-flash { 0% { opacity: 0; } 18% { opacity: .42; background: #d4493f; } 100% { opacity: 0; } }
+.combat-feedback { position: fixed; z-index: 3; top: 43%; left: 50%; opacity: 0; transform: translate(-50%, 12px) scale(.92); pointer-events: none; font-size: clamp(20px, 4vw, 34px); font-weight: 900; letter-spacing: .08em; text-shadow: 0 2px 8px #10232c; transition: opacity 120ms, transform 120ms; }
+.combat-feedback.visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.combat-feedback.damage, .combat-feedback.impact { color: #ffd0bd; }
+.combat-feedback.hit { color: #fff2a6; }
+.combat-feedback.protected, .combat-feedback.blocked { color: #a9f4ff; }
+/* Keep controls available after the first-time walkthrough is dismissed. */
+#help-button { position: fixed; z-index: 2; top: 54px; left: 10px; padding: 6px 10px; border: 1px solid #52697255; border-radius: 5px; background: #fffef0e8; color: #182b35; cursor: pointer; }
+#onboarding { position: fixed; z-index: 2; top: 94px; left: 10px; width: min(340px, calc(100vw - 20px)); padding: 14px; border: 1px solid #52697255; border-radius: 6px; background: #fffef0f5; box-shadow: 0 8px 28px #10232c33; }
+#onboarding.hidden { display: none; }
+.onboarding-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.onboarding-heading h2 { margin: 0; font-size: 16px; }
+#close-onboarding { border: 0; background: transparent; color: #526972; font-size: 22px; cursor: pointer; }
+#onboarding ul { display: grid; gap: 8px; padding-left: 20px; line-height: 1.4; }
+#onboarding p { margin: 10px 0 0; color: #526972; }
+kbd { padding: 1px 4px; border: 1px solid #aab4ae; border-radius: 3px; background: #fff; font: inherit; font-size: .9em; }
 /* Cover the world and HUD when the local crew's plane is destroyed. */
 #game-over-screen { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; padding: 20px; background: #10232cbb; }
 #game-over-screen.hidden { display: none; }

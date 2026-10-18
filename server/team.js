@@ -11,6 +11,12 @@ class Team {
     this.score = 0;
     this.spawnIndex = index;
     this.plane = new Plane(index);
+    this.spawnProtectedUntil = Date.now() + Team.SPAWN_PROTECTION_MS;
+  }
+
+  // Whether this crew is still inside its temporary post-spawn shield window.
+  isSpawnProtected(now = Date.now()) {
+    return now < this.spawnProtectedUntil;
   }
 
   // Add points earned from captures or destroying another crew's plane.
@@ -20,7 +26,7 @@ class Team {
 
   // Apply damage and report whether this hit destroyed the plane.
   takeDamage(points) {
-    if (this.plane.health <= 0) return false;
+    if (this.plane.health <= 0 || this.isSpawnProtected()) return false;
     this.plane.health = Math.max(0, this.plane.health - points);
     return this.plane.health === 0;
   }
@@ -28,6 +34,7 @@ class Team {
   // Ignore friendly or missed shots; otherwise return the result of the hit.
   receiveProjectile(projectile, damage) {
     if (this.plane.health <= 0 || !this.plane.contains(projectile.x, projectile.y)) return null;
+    if (this.isSpawnProtected()) return "protected";
     return this.takeDamage(damage);
   }
 
@@ -35,6 +42,7 @@ class Team {
   respawn() {
     if (this.plane.health > 0) return false;
     this.plane = new Plane(this.spawnIndex);
+    this.spawnProtectedUntil = Date.now() + Team.SPAWN_PROTECTION_MS;
     return true;
   }
 
@@ -51,10 +59,13 @@ class Team {
       name: this.name,
       inviteCode: this.inviteCode,
       score: this.score,
+      spawnProtected: this.isSpawnProtected(),
       plane: this.plane.snapshot(),
     };
   }
 }
+
+Team.SPAWN_PROTECTION_MS = 5_000;
 
 // Export the team entity.
 module.exports = Team;
