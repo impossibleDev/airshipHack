@@ -38,8 +38,12 @@ joining.
   **2** for wall, or **3** for generator). Point at an empty spot on your plane
   and press **F** to build it. Building costs resources; your balance and plane
   health are shown in the status bar.
-- Fly into the marked capture area and hold it to earn crew score. Avoid enemy
-  fire and watch the crew leaderboard.
+- Fly into the marked capture area and hold it to earn crew score. Enemy ship
+  collisions cause impact damage to both planes, with harder impacts dealing
+  more damage. Avoid enemy fire and watch the crew leaderboard.
+- If your plane is destroyed, use the **Respawn** button on the game-over
+  screen. Your crew and score are kept, but crew members return to the fresh
+  plane's deck and its resources and installed tiles reset.
 
 Each plane's deck appearance is randomly selected from the three available
 skins.

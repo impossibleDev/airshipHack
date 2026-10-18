@@ -3,6 +3,9 @@ const { createTile, TILE_COSTS } = require("./tiles");
 
 const WIDTH = 5;
 const HEIGHT = 3;
+const HALF_WIDTH = WIDTH / 2;
+const HALF_HEIGHT = HEIGHT / 2;
+const COLLISION_SEPARATION = 0.001;
 
 // Shared flight and on-deck movement tuning.
 const TURN_SPEED = 1.7;
@@ -122,7 +125,55 @@ class Plane {
     const dy = y - this.y;
     const localX = dx * Math.cos(this.angle) + dy * Math.sin(this.angle);
     const localY = -dx * Math.sin(this.angle) + dy * Math.cos(this.angle);
-    return Math.abs(localX) <= WIDTH / 2 && Math.abs(localY) <= HEIGHT / 2;
+    return Math.abs(localX) <= HALF_WIDTH && Math.abs(localY) <= HALF_HEIGHT;
+  }
+
+  // Separate overlapping hulls and return their closing speed before impact.
+  collide(other) {
+    const axes = [
+      [Math.cos(this.angle), Math.sin(this.angle)],
+      [-Math.sin(this.angle), Math.cos(this.angle)],
+      [Math.cos(other.angle), Math.sin(other.angle)],
+      [-Math.sin(other.angle), Math.cos(other.angle)],
+    ];
+    let minimumOverlap = Infinity;
+    let collisionNormal = null;
+    const centerX = other.x - this.x;
+    const centerY = other.y - this.y;
+
+    for (const [axisX, axisY] of axes) {
+      const thisRadius = HALF_WIDTH * Math.abs(Math.cos(this.angle) * axisX + Math.sin(this.angle) * axisY)
+        + HALF_HEIGHT * Math.abs(-Math.sin(this.angle) * axisX + Math.cos(this.angle) * axisY);
+      const otherRadius = HALF_WIDTH * Math.abs(Math.cos(other.angle) * axisX + Math.sin(other.angle) * axisY)
+        + HALF_HEIGHT * Math.abs(-Math.sin(other.angle) * axisX + Math.cos(other.angle) * axisY);
+      const distance = centerX * axisX + centerY * axisY;
+      const overlap = thisRadius + otherRadius - Math.abs(distance);
+      if (overlap <= 0) return null;
+      if (overlap < minimumOverlap) {
+        minimumOverlap = overlap;
+        const direction = distance < 0 ? -1 : 1;
+        collisionNormal = [axisX * direction, axisY * direction];
+      }
+    }
+
+    const [normalX, normalY] = collisionNormal;
+    const correction = (minimumOverlap + COLLISION_SEPARATION) / 2;
+    this.x -= normalX * correction;
+    this.y -= normalY * correction;
+    other.x += normalX * correction;
+    other.y += normalY * correction;
+
+    const relativeVelocityX = other.vx - this.vx;
+    const relativeVelocityY = other.vy - this.vy;
+    const closingSpeed = -(relativeVelocityX * normalX + relativeVelocityY * normalY);
+    if (closingSpeed > 0) {
+      const impulse = closingSpeed * 0.75;
+      this.vx -= normalX * impulse;
+      this.vy -= normalY * impulse;
+      other.vx += normalX * impulse;
+      other.vy += normalY * impulse;
+    }
+    return Math.max(0, closingSpeed);
   }
 
   // Return a network-safe copy of the plane and its tile grid.

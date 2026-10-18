@@ -8,6 +8,8 @@ const TICK_MS = 50;
 const EMPTY_TEAM_TIMEOUT_MS = 30_000;
 // Score paid when a crew destroys an enemy plane.
 const KILL_SCORE = 200;
+const COLLISION_DAMAGE_PER_SPEED = 2;
+const MIN_COLLISION_DAMAGE_SPEED = 1;
 
 // Coordinates multiplayer events and advances the authoritative game state.
 class Game {
@@ -36,6 +38,7 @@ class Game {
     socket.on("interact", (position = {}) => this.interact(socket, position || {}));
     socket.on("build", (position = {}) => this.build(socket, position || {}));
     socket.on("fire", (position = {}) => this.fire(socket, position || {}));
+    socket.on("respawn", () => this.respawn(socket));
     socket.on("disconnect", () => this.disconnect(socket));
   }
 
@@ -96,11 +99,28 @@ class Game {
     player.setInput(input);
   }
 
+  // Respawn a destroyed crew plane and reset its pilots to the fresh deck.
+  respawn(socket) {
+    const player = this.players.get(socket.id);
+    const team = player && this.teams.get(player.teamId);
+    if (!team || team.plane.health > 0) return;
+
+    for (const member of this.players.values()) {
+      if (member.teamId !== team.id) continue;
+      member.leaveStation(team.plane);
+      member.x = 2;
+      member.y = 2;
+      member.clearInput();
+    }
+    if (!team.respawn()) return;
+    this.broadcastState();
+  }
+
   // Interact with a nearby ship tile or leave the player's current station.
   interact(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
-    if (!team) return;
+    if (!team || team.plane.health <= 0) return;
 
     if (!player.mountedTileId) {
       const x = Math.round(Number(position.x));
@@ -135,7 +155,7 @@ class Game {
   build(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
-    if (!team) return;
+    if (!team || team.plane.health <= 0) return;
     team.plane.build(
       player,
       Number(position.x),
@@ -149,7 +169,8 @@ class Game {
   fire(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
-    if (!team || !player.mountedTileId || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) return;
+    if (!team || team.plane.health <= 0 || !player.mountedTileId
+      || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) return;
     const station = team.plane.findTile(player.mountedTileId);
     const now = Date.now();
     if (!station || station.tile.type !== "turret" || !player.canFire(now)) return;
@@ -200,6 +221,7 @@ class Game {
       );
     }
 
+    this.resolvePlaneCollisions();
     this.updateCapturePoint(dt);
 
     // A destroyed plane awards points once; its later hits are ignored.
@@ -223,6 +245,25 @@ class Game {
       }
     }
     this.broadcastState();
+  }
+
+  // Separate colliding enemy hulls and apply damage from their impact speed.
+  resolvePlaneCollisions() {
+    const teams = [...this.teams.values()];
+    for (let i = 0; i < teams.length; i++) {
+      const first = teams[i];
+      if (first.plane.health <= 0) continue;
+      for (let j = i + 1; j < teams.length; j++) {
+        const second = teams[j];
+        if (second.plane.health <= 0) continue;
+        const impactSpeed = first.plane.collide(second.plane);
+        if (impactSpeed === null || impactSpeed < MIN_COLLISION_DAMAGE_SPEED) continue;
+
+        const damage = Math.round(impactSpeed * COLLISION_DAMAGE_PER_SPEED);
+        if (first.takeDamage(damage)) second.awardScore(KILL_SCORE);
+        if (second.takeDamage(damage)) first.awardScore(KILL_SCORE);
+      }
+    }
   }
 
   // Award completed captures and relocate the objective for the next round.

@@ -77,6 +77,7 @@ socket.on("disconnect", () => {
   state.playerId = null;
   state.teamId = null;
   state.players = [];
+  document.getElementById("game-over-screen").classList.add("hidden");
   document.getElementById("join-screen").classList.remove("hidden");
   notify("Disconnected. Reconnecting...");
 });
@@ -105,12 +106,20 @@ socket.on("state", (next) => {
   updateHud();
 });
 socket.on("notice", notify);
+document.getElementById("respawn-button").addEventListener("click", () => {
+  socket.emit("respawn");
+});
 
 // Refresh crew details, leaderboard scores, and the player's current role.
 function updateHud() {
   const team = ownTeam();
   const player = ownPlayer();
-  if (!team) return;
+  const gameOverScreen = document.getElementById("game-over-screen");
+  if (!team) {
+    gameOverScreen.classList.add("hidden");
+    return;
+  }
+  gameOverScreen.classList.toggle("hidden", team.plane.health > 0);
   const members = state.players.filter((item) => item.teamId === team.id).length;
   document.getElementById("team-banner").textContent =
     `${team.name} · invite ${team.inviteCode} · ${members} ${members === 1 ? "player" : "players"}`;

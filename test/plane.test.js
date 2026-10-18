@@ -45,3 +45,18 @@ test("plane hull stays inside the circular map and bounces off the edge", () => 
   assert.ok(Math.abs(plane.y) < 1e-10);
   assert.ok(plane.vx < 0);
 });
+
+// Overlapping hulls are separated and their closing velocity is bounced.
+test("colliding planes are separated and report their impact speed", () => {
+  const first = new Plane();
+  const second = new Plane();
+  first.x = 0;
+  second.x = 4.8;
+  first.vx = 1;
+  second.vx = -1;
+
+  assert.equal(first.collide(second), 2);
+  assert.ok(second.x - first.x >= 5);
+  assert.ok(first.vx < 0);
+  assert.ok(second.vx > 0);
+});

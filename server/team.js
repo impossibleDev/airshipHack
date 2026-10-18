@@ -9,6 +9,7 @@ class Team {
     this.name = `${pilotName}'s crew`;
     this.inviteCode = randomBytes(3).toString("hex").toUpperCase();
     this.score = 0;
+    this.spawnIndex = index;
     this.plane = new Plane(index);
   }
 
@@ -30,8 +31,16 @@ class Team {
     return this.takeDamage(damage);
   }
 
+  // Replace a destroyed airship while preserving its crew identity and score.
+  respawn() {
+    if (this.plane.health > 0) return false;
+    this.plane = new Plane(this.spawnIndex);
+    return true;
+  }
+
   // Advance this crew's plane and notify its members of tile events.
   update(dt, players, arena, notify) {
+    if (this.plane.health <= 0) return;
     this.plane.update(dt, players, notify, arena);
   }
 

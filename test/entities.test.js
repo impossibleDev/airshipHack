@@ -60,3 +60,51 @@ test("destroying an enemy plane awards the attacker 200 score", () => {
   assert.equal(defender.plane.health, 0);
   assert.equal(attacker.score, 200);
 });
+
+// High-speed plane collisions damage both crews and award the destroying crew.
+test("colliding planes take impact damage and award a kill", () => {
+  const game = new Game({ emit() {} });
+  const attacker = new Team("Attacker", 0);
+  const defender = new Team("Defender", 1);
+  attacker.plane.x = 10;
+  defender.plane.x = 14.8;
+  attacker.plane.vx = 1;
+  defender.plane.vx = -1;
+  defender.plane.health = 4;
+  game.teams.set(attacker.id, attacker);
+  game.teams.set(defender.id, defender);
+
+  game.update();
+
+  assert.equal(attacker.plane.health, 96);
+  assert.equal(defender.plane.health, 0);
+  assert.equal(attacker.score, 200);
+  assert.ok(defender.plane.x - attacker.plane.x >= 5);
+});
+
+// A dead crew can respawn its plane without losing crew identity or score.
+test("respawning restores a destroyed plane and resets its crew", () => {
+  const game = new Game({ emit() {} });
+  const team = new Team("Crew", 2);
+  const player = new Player("pilot-1", "Pilot", team.id);
+  const oldPlane = team.plane;
+  const pilotSeat = oldPlane.getTile(1, 2);
+  pilotSeat.mountedBy = player.id;
+  player.mountedTileId = pilotSeat.id;
+  player.setInput({ thrust: 1 });
+  player.x = 4;
+  team.plane.health = 0;
+  team.score = 75;
+  game.teams.set(team.id, team);
+  game.players.set(player.id, player);
+
+  game.respawn({ id: player.id });
+
+  assert.notEqual(team.plane, oldPlane);
+  assert.equal(team.plane.health, 100);
+  assert.equal(team.score, 75);
+  assert.equal(player.mountedTileId, null);
+  assert.deepEqual(player.input, {});
+  assert.equal(player.x, 2);
+  assert.equal(player.y, 2);
+});

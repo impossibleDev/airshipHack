@@ -28,6 +28,14 @@
     <footer id="status-bar"></footer>
     <!-- Temporary notices are populated by the client when server events arrive. -->
     <div id="toast"></div>
+    <section id="game-over-screen" class="hidden" aria-live="polite">
+      <div class="game-over-card">
+        <p class="game-over-eyebrow">CREW DESTROYED</p>
+        <h1>Game over</h1>
+        <p>Your airship has been destroyed. Respawn with your crew to return to the battle.</p>
+        <button id="respawn-button" type="button">Respawn</button>
+      </div>
+    </section>
     <!-- Socket.IO supplies networking before the ES module game controller starts. -->
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="/js/main.js"></script>

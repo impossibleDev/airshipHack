@@ -29,6 +29,15 @@ button, input { font: inherit; }
 #join-error, #toast { color: #9e342c; }
 #toast { top: 10px; left: 50%; display: none; transform: translateX(-50%); }
 #toast.visible { display: block; }
+/* Cover the world and HUD when the local crew's plane is destroyed. */
+#game-over-screen { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; padding: 20px; background: #10232cbb; }
+#game-over-screen.hidden { display: none; }
+.game-over-card { width: min(420px, 100%); padding: 30px; border: 1px solid #f2b54a88; border-radius: 8px; background: #fffef0; text-align: center; box-shadow: 0 16px 48px #07151c66; }
+.game-over-eyebrow { margin: 0; color: #9e342c; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
+.game-over-card h1 { margin: 8px 0; font-size: 32px; }
+.game-over-card p:not(.game-over-eyebrow) { margin: 0 0 20px; color: #526972; line-height: 1.5; }
+#respawn-button { padding: 10px 24px; border: 0; border-radius: 4px; background: #bc762b; color: #fffef0; font-weight: 700; cursor: pointer; }
+#respawn-button:hover { background: #9e5c1f; }
 /* Shift and shrink the minimap on phones to avoid overlapping the status bar. */
 @media (max-width: 640px) {
   #mini-map-panel { right: 8px; bottom: 58px; width: 150px; }
