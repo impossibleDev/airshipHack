@@ -117,6 +117,43 @@ function drawWorld(ctx, state, canvas, pointer) {
     );
     ctx.fill();
   }
+  if (state.capturePoint) {
+    const point = state.capturePoint;
+    const x = canvas.clientWidth / 2 + (point.x - camera.x) * TILE_SIZE;
+    const y = canvas.clientHeight / 2 + (point.y - camera.y) * TILE_SIZE;
+    ctx.save();
+    ctx.fillStyle = "#e9ab5422";
+    ctx.strokeStyle = "#bd762b";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 6]);
+    ctx.beginPath();
+    ctx.arc(x, y, point.radius * TILE_SIZE, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#f2b54a";
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#fffef0";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.stroke();
+    if (point.progress > 0) {
+      const teamIndex = state.teams.findIndex((team) => team.id === point.capturingTeamId);
+      ctx.strokeStyle = COLORS[(teamIndex < 0 ? 0 : teamIndex) % COLORS.length];
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(x, y, 16, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * point.progress);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#182b35";
+    ctx.font = "bold 12px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("CAPTURE · +50", x, y - 20);
+    ctx.restore();
+  }
   if (state.mapCircle) {
     const circle = state.mapCircle;
     const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
@@ -203,6 +240,29 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
       viewWidth * scale,
       viewHeight * scale,
     );
+  }
+
+  if (state.capturePoint) {
+    const point = state.capturePoint;
+    const pointX = mapX(point.x);
+    const pointY = mapY(point.y);
+    ctx.strokeStyle = "#bd762b";
+    ctx.fillStyle = "#f2b54a";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, Math.max(3, point.radius * scale), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    if (point.progress > 0) {
+      const teamIndex = state.teams.findIndex((team) => team.id === point.capturingTeamId);
+      ctx.strokeStyle = COLORS[(teamIndex < 0 ? 0 : teamIndex) % COLORS.length];
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pointX, pointY, 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * point.progress);
+      ctx.stroke();
+    }
   }
 
   state.teams.forEach((team, index) => {

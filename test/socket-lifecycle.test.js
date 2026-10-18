@@ -2,6 +2,8 @@ const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const test = require("node:test");
 const Game = require("../server/game");
+const Player = require("../server/player");
+const Team = require("../server/team");
 
 class FakeSocket extends EventEmitter {
   constructor(id) {
@@ -41,6 +43,9 @@ test("disconnect removes the player, frees their station, and allows reconnect",
   first.emit("join", { name: "Pilot One" });
   const joined = first.sent.find((message) => message.event === "joined").args[0];
   const team = game.teams.get(joined.teamId);
+  const player = game.players.get("pilot-1");
+  assert.ok(team instanceof Team);
+  assert.ok(player instanceof Player);
 
   first.emit("interact", { x: 1, y: 2 });
   const seat = team.plane.getTile(1, 2);

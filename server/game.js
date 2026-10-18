@@ -1,5 +1,8 @@
-const { randomBytes, randomUUID } = require("node:crypto");
-const Plane = require("./plane");
+const Arena = require("./arena");
+const CapturePoint = require("./capture-point");
+const Player = require("./player");
+const Projectile = require("./projectile");
+const Team = require("./team");
 
 const TICK_MS = 50;
 const EMPTY_TEAM_TIMEOUT_MS = 30_000;
@@ -11,7 +14,8 @@ class Game {
     this.players = new Map();
     this.projectiles = new Map();
     this.emptyTeamTimers = new Map();
-    this.mapCircle = { x: 30, y: 0, radius: 40 };
+    this.arena = new Arena();
+    this.capturePoint = new CapturePoint(this.arena, this.teams.values());
   }
 
   start() {
@@ -44,30 +48,21 @@ class Game {
       return;
     }
     if (!team) {
-      team = {
-        id: randomUUID(),
-        name: `${teamName}'s crew`,
-        inviteCode: randomBytes(3).toString("hex").toUpperCase(),
-        score: 0,
-        plane: new Plane(this.teams.size),
-      };
+      team = new Team(teamName, this.teams.size);
       this.teams.set(team.id, team);
-      const spawnDistance = Math.hypot(team.plane.x - this.mapCircle.x, team.plane.y - this.mapCircle.y);
-      this.mapCircle.radius = Math.max(this.mapCircle.radius, spawnDistance + 4);
+      this.arena.expandToInclude(team.plane.x, team.plane.y, 4);
+      if (this.capturePoint.isNear(
+        team.plane.x,
+        team.plane.y,
+        this.capturePoint.radius + CapturePoint.SPAWN_CLEARANCE,
+      )) {
+        this.capturePoint = this.createCapturePoint();
+      }
     }
 
     clearTimeout(this.emptyTeamTimers.get(team.id));
     this.emptyTeamTimers.delete(team.id);
-    const player = {
-      id: socket.id,
-      name: teamName,
-      teamId: team.id,
-      x: 2,
-      y: 2,
-      mountedTileId: null,
-      input: {},
-      lastShotAt: 0,
-    };
+    const player = new Player(socket.id, teamName, team.id);
     this.players.set(socket.id, player);
     socket.emit("joined", this.joinInfo(player));
     this.broadcastState();
@@ -81,15 +76,14 @@ class Game {
     };
   }
 
+  createCapturePoint() {
+    return new CapturePoint(this.arena, this.teams.values());
+  }
+
   setInput(socket, input) {
     const player = this.players.get(socket.id);
     if (!player) return;
-    player.input = {
-      thrust: clamp(input.thrust),
-      turn: clamp(input.turn),
-      moveX: clamp(input.moveX),
-      moveY: clamp(input.moveY),
-    };
+    player.setInput(input);
   }
 
   interact(socket, position) {
@@ -144,30 +138,22 @@ class Game {
     const team = player && this.teams.get(player.teamId);
     if (!team || !player.mountedTileId || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) return;
     const station = team.plane.findTile(player.mountedTileId);
-    if (!station || station.tile.type !== "turret" || Date.now() - player.lastShotAt < 350) return;
+    const now = Date.now();
+    if (!station || station.tile.type !== "turret" || !player.canFire(now)) return;
 
-    player.lastShotAt = Date.now();
+    player.recordShot(now);
     const start = team.plane.tileToWorld(station.x, station.y);
     const target = team.plane.tileToWorld(Number(position.x), Number(position.y));
     const angle = Math.atan2(target.y - start.y, target.x - start.x);
-    this.projectiles.set(randomUUID(), {
-      x: start.x,
-      y: start.y,
-      vx: Math.cos(angle) * 14,
-      vy: Math.sin(angle) * 14,
-      teamId: team.id,
-      expiresAt: Date.now() + 2500,
-    });
+    const projectile = new Projectile(start.x, start.y, angle, team.id);
+    this.projectiles.set(projectile.id, projectile);
   }
 
   disconnect(socket) {
     const player = this.players.get(socket.id);
     if (!player) return;
     const team = this.teams.get(player.teamId);
-    if (team && player.mountedTileId) {
-      const station = team.plane.findTile(player.mountedTileId);
-      if (station) station.tile.mountedBy = null;
-    }
+    if (team) player.leaveStation(team.plane);
     this.players.delete(socket.id);
 
     if (team && ![...this.players.values()].some((member) => member.teamId === team.id)) {
@@ -187,35 +173,33 @@ class Game {
   update() {
     const dt = TICK_MS / 1000;
     for (const team of this.teams.values()) {
-      team.plane.update(
+      team.update(
         dt,
         [...this.players.values()].filter((player) => player.teamId === team.id),
+        this.arena,
         (message) => {
           for (const player of this.players.values()) {
             if (player.teamId === team.id) this.notice(player, message);
           }
         },
-        this.mapCircle,
       );
     }
 
+    this.updateCapturePoint(dt);
+
     const now = Date.now();
     for (const [id, shot] of this.projectiles) {
-      shot.x += shot.vx * dt;
-      shot.y += shot.vy * dt;
-      if (
-        now >= shot.expiresAt
-        || Math.hypot(shot.x - this.mapCircle.x, shot.y - this.mapCircle.y) > this.mapCircle.radius
-      ) {
+      if (!shot.update(dt, now, this.arena)) {
         this.projectiles.delete(id);
         continue;
       }
       for (const team of this.teams.values()) {
-        if (team.id !== shot.teamId && team.plane.health > 0 && team.plane.contains(shot.x, shot.y)) {
-          team.plane.health = Math.max(0, team.plane.health - 8);
-          if (team.plane.health === 0) {
+        if (team.id !== shot.teamId) {
+          const destroyed = team.receiveProjectile(shot, 8);
+          if (destroyed === null) continue;
+          if (destroyed) {
             const attacker = this.teams.get(shot.teamId);
-            if (attacker) attacker.score++;
+            if (attacker) attacker.awardScore(1);
           }
           this.projectiles.delete(id);
           break;
@@ -225,30 +209,32 @@ class Game {
     this.broadcastState();
   }
 
+  updateCapturePoint(dt) {
+    const team = this.capturePoint.update(this.teams.values(), dt);
+    if (!team) return;
+
+    team.awardScore(CapturePoint.SCORE);
+    for (const player of this.players.values()) {
+      if (player.teamId === team.id) {
+        this.notice(player, `Capture point secured! +${CapturePoint.SCORE} score.`);
+      }
+    }
+    this.capturePoint = this.createCapturePoint();
+  }
+
   broadcastState() {
     this.io.emit("state", {
-      mapCircle: this.mapCircle,
-      teams: [...this.teams.values()].map((team) => ({
-        id: team.id,
-        name: team.name,
-        inviteCode: team.inviteCode,
-        score: team.score,
-        plane: team.plane.snapshot(),
-      })),
-      players: [...this.players.values()].map(({ id, name, teamId, x, y, mountedTileId }) => ({
-        id, name, teamId, x, y, mountedTileId,
-      })),
-      projectiles: [...this.projectiles.values()].map(({ x, y, teamId }) => ({ x, y, teamId })),
+      mapCircle: this.arena.snapshot(),
+      capturePoint: this.capturePoint.snapshot(),
+      teams: [...this.teams.values()].map((team) => team.snapshot()),
+      players: [...this.players.values()].map((player) => player.snapshot()),
+      projectiles: [...this.projectiles.values()].map((projectile) => projectile.snapshot()),
     });
   }
 
   notice(player, message) {
     this.io.to(player.id).emit("notice", message);
   }
-}
-
-function clamp(value) {
-  return Math.max(-1, Math.min(1, Number(value) || 0));
 }
 
 module.exports = Game;

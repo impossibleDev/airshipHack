@@ -12,7 +12,7 @@ class Tile {
       if (player.mountedTileId !== this.id) return notice("Leave your current station first.");
       this.mountedBy = null;
       player.mountedTileId = null;
-      player.input = {};
+      player.clearInput();
       return notice("Station left.");
     }
     notice("Nothing to interact with here.");

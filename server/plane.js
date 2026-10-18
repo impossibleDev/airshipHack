@@ -55,7 +55,7 @@ class Plane {
     this.tiles[y][x] = createTile(type);
   }
 
-  update(dt, players, noticeTeam, mapCircle = null) {
+  update(dt, players, noticeTeam, arena = null) {
     const now = Date.now();
     for (const row of this.tiles) {
       for (const tile of row) {
@@ -81,23 +81,7 @@ class Plane {
       this.y += this.vy * dt;
     }
 
-    if (mapCircle) {
-      const dx = this.x - mapCircle.x;
-      const dy = this.y - mapCircle.y;
-      const distance = Math.hypot(dx, dy);
-      const maxCenterDistance = mapCircle.radius - Math.hypot(WIDTH / 2, HEIGHT / 2);
-      if (distance > maxCenterDistance) {
-        const normalX = dx / distance;
-        const normalY = dy / distance;
-        this.x = mapCircle.x + normalX * maxCenterDistance;
-        this.y = mapCircle.y + normalY * maxCenterDistance;
-        const outwardSpeed = this.vx * normalX + this.vy * normalY;
-        if (outwardSpeed > 0) {
-          this.vx -= 1.35 * outwardSpeed * normalX;
-          this.vy -= 1.35 * outwardSpeed * normalY;
-        }
-      }
-    }
+    if (arena) arena.constrainPlane(this, Math.hypot(WIDTH / 2, HEIGHT / 2));
 
     const cos = Math.cos(this.angle);
     const sin = Math.sin(this.angle);

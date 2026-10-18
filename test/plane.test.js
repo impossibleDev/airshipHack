@@ -1,16 +1,16 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const Arena = require("../server/arena");
 const Plane = require("../server/plane");
+const Player = require("../server/player");
 
 test("world-down movement stays world-down on a rotated plane", () => {
   const plane = new Plane();
   plane.angle = Math.PI / 4;
-  const player = {
-    x: 2,
-    y: 1,
-    mountedTileId: null,
-    input: { moveX: 0, moveY: 1 },
-  };
+  const player = new Player("pilot-1", "Pilot", "crew-1");
+  player.x = 2;
+  player.y = 1;
+  player.setInput({ moveX: 0, moveY: 1 });
 
   plane.update(0.05, [player], () => {});
 
@@ -28,11 +28,7 @@ test("plane hull stays inside the circular map and bounces off the edge", () => 
   plane.y = 0;
   plane.vx = 1;
 
-  plane.update(0, [], () => {}, {
-    x: 0,
-    y: 0,
-    radius: 10,
-  });
+  plane.update(0, [], () => {}, new Arena(0, 0, 10));
 
   const hullRadius = Math.hypot(2.5, 1.5);
   assert.ok(Math.abs(plane.x - (10 - hullRadius)) < 1e-10);
