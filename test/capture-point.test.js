@@ -20,12 +20,13 @@ test("capture points spawn inside the circular map", () => {
   assert.ok(distance <= game.arena.radius - game.capturePoint.radius);
 });
 
-// A single crew holding the point for its full duration earns the reward.
-test("holding a capture point awards the configured score and moves the point", () => {
+// A single crew holding the point earns equal score and resource rewards.
+test("holding a capture point awards configured score and resources", () => {
   const game = createGame();
   const team = new Team("Crew", 0);
   game.teams.set(team.id, team);
   const oldPoint = game.capturePoint.snapshot();
+  const startingResources = team.plane.resources;
   team.plane.x = oldPoint.x;
   team.plane.y = oldPoint.y;
 
@@ -35,6 +36,10 @@ test("holding a capture point awards the configured score and moves the point", 
 
   game.update();
   assert.equal(team.score, CapturePoint.SCORE);
+  assert.equal(
+    team.plane.resources,
+    startingResources + CapturePoint.DURATION + CapturePoint.SCORE,
+  );
   assert.notDeepEqual(game.capturePoint, oldPoint);
 });
 

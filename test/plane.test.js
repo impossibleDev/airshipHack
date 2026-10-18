@@ -5,6 +5,46 @@ const Plane = require("../server/plane");
 const Player = require("../server/player");
 const { createTile } = require("../server/tiles");
 
+// Turret power comes from an adjacent, working generator, not a remote one.
+test("turrets require an adjacent working generator", () => {
+  const plane = new Plane();
+  const turret = createTile("turret");
+  plane.tiles[0][0] = turret;
+
+  assert.equal(plane.hasAdjacentGenerator(0, 0), false);
+
+  plane.tiles[0][1] = createTile("generator");
+  assert.equal(plane.hasAdjacentGenerator(0, 0), true);
+  plane.getTile(1, 0).broken = true;
+  assert.equal(plane.hasAdjacentGenerator(0, 0), false);
+});
+
+// Resources accrue at one per second regardless of generator state.
+test("plane gains one resource per second as game time advances", () => {
+  const plane = new Plane();
+  const startingResources = plane.resources;
+
+  plane.update(0.5, [], () => {});
+  assert.equal(plane.resources, startingResources);
+  plane.update(0.5, [], () => {});
+
+  assert.equal(plane.resources, startingResources + 1);
+  plane.getTile(2, 2).broken = true;
+  plane.update(1, [], () => {});
+  assert.equal(plane.resources, startingResources + 2);
+});
+
+// Generators do not directly grant resources.
+test("generator update does not change plane resources", () => {
+  const plane = new Plane();
+  const generator = plane.getTile(2, 2);
+  const startingResources = plane.resources;
+
+  generator.update(plane, Date.now(), () => {});
+
+  assert.equal(plane.resources, startingResources);
+});
+
 // The server-selected skin is part of the shared plane snapshot.
 test("plane snapshot includes its server-selected skin", () => {
   const plane = new Plane();

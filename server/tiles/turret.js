@@ -10,6 +10,9 @@ class Turret extends Tile {
   // Mount an available turret, or let the base class handle leaving it.
   interact(plane, player, x, y, notice) {
     if (player.mountedTileId) return super.interact(plane, player, x, y, notice);
+    if (!plane.hasAdjacentGenerator(x, y)) {
+      return notice("Turrets need an adjacent working generator.");
+    }
     if (this.mountedBy) return notice("Someone is already using that turret.");
     this.mountedBy = player.id;
     player.mountedTileId = this.id;

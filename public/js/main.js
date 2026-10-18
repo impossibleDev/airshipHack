@@ -20,7 +20,7 @@ const keys = new Set();
 const pointer = { x: 0, y: 0, inside: false };
 // Build menu entries pair a server tile type with its displayed resource cost.
 const tileOptions = [
-  ["turret", 35], ["wall", 10], ["generator", 50],
+  ["turret", 75], ["wall", 50], ["generator", 100],
 ];
 let selectedTile = "turret";
 let pilotName = "";

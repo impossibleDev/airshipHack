@@ -72,7 +72,7 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
   ctx.roundRect(x + 5, y + 5, TILE_SIZE - 10, TILE_SIZE - 10, 5);
   ctx.fill();
   ctx.fillStyle = "#183440";
-  ctx.font = "bold 19px sans-serif";
+  ctx.font = 'bold 19px "Pixelify Sans", sans-serif';
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(symbols[tile.type] || "?", x + TILE_SIZE / 2, y + TILE_SIZE / 2);

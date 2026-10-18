@@ -28,6 +28,7 @@ class Plane {
     this.health = 100;
     this.maxHealth = 100;
     this.resources = 100;
+    this.resourceIncomeRemainder = 0;
     this.tiles = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(null));
     this.tiles[2][1] = createTile("pilot");
     this.tiles[2][2] = createTile("generator");
@@ -53,6 +54,14 @@ class Plane {
   // Ship controls and weapons require at least one running generator.
   hasPower() {
     return this.tiles.flat().some((tile) => tile?.type === "generator" && !tile.broken);
+  }
+
+  // Turrets draw power from an operational generator in an orthogonally adjacent tile.
+  hasAdjacentGenerator(x, y) {
+    return [[0, -1], [1, 0], [0, 1], [-1, 0]].some(([offsetX, offsetY]) => {
+      const tile = this.getTile(x + offsetX, y + offsetY);
+      return tile?.type === "generator" && !tile.broken;
+    });
   }
 
   // Reflect a swept pellet from the first wall it crosses, removing walls after ten hits.
@@ -144,6 +153,11 @@ class Plane {
   // Update ship systems, pilot-controlled flight, and walking crew members.
   update(dt, players, noticeTeam, arena = null) {
     const now = Date.now();
+    this.resourceIncomeRemainder += dt;
+    const earnedResources = Math.floor(this.resourceIncomeRemainder);
+    this.resources += earnedResources;
+    this.resourceIncomeRemainder -= earnedResources;
+
     for (const row of this.tiles) {
       for (const tile of row) {
         if (tile) tile.update(this, now, noticeTeam);

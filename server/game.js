@@ -189,6 +189,10 @@ class Game {
     const station = team.plane.findTile(player.mountedTileId);
     const now = Date.now();
     if (!station || station.tile.type !== "turret" || !player.canFire(now)) return;
+    if (!team.plane.hasAdjacentGenerator(station.x, station.y)) {
+      this.notice(player, "Weapons offline. Turrets need an adjacent working generator.");
+      return;
+    }
     if (!team.plane.hasPower()) {
       this.notice(player, "Weapons offline. Repair a generator to restore ship power.");
       return;
@@ -344,9 +348,10 @@ class Game {
     if (!team) return;
 
     team.awardScore(CapturePoint.SCORE);
+    team.plane.resources += CapturePoint.SCORE;
     for (const player of this.players.values()) {
       if (player.teamId === team.id) {
-        this.notice(player, `Capture point secured! +${CapturePoint.SCORE} score.`);
+        this.notice(player, `Capture point secured! +${CapturePoint.SCORE} score and resources.`);
       }
     }
     this.sendCombatFeedback(team, { type: "capture" });

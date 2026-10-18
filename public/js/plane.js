@@ -128,14 +128,14 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
     ctx.arc(px, py, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#182b35";
-    ctx.font = "10px system-ui";
+    ctx.font = '10px "Pixelify Sans", sans-serif';
     ctx.fillText(player.name, px, py - 10);
   }
   ctx.restore();
 
   ctx.fillStyle = "#182b35";
   ctx.textAlign = "center";
-  ctx.font = "12px system-ui";
+  ctx.font = '12px "Pixelify Sans", sans-serif';
   ctx.fillText(team.name, x, y - height / 2 - 10);
   ctx.fillStyle = "#fff";
   ctx.fillRect(x - 45, y + height / 2 + 5, 90, 4);
@@ -150,20 +150,7 @@ function drawWorld(ctx, state, canvas, pointer) {
 
   const ownTeam = state.teams.find((team) => team.id === state.teamId);
   const camera = ownTeam ? ownTeam.plane : { x: 0, y: 0 };
-  // Clip the playable background visually to the server-defined circular arena.
-  if (state.mapCircle) {
-    const circle = state.mapCircle;
-    const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
-    const y = canvas.clientHeight / 2 + (circle.y - camera.y) * TILE_SIZE;
-    const radius = circle.radius * TILE_SIZE;
-    const gradient = ctx.createLinearGradient(0, y - radius, 0, y + radius);
-    gradient.addColorStop(0, "#a9d3d8");
-    gradient.addColorStop(1, "#e4d4ad");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // The arena boundary is an outline only; the sky background stays consistent.
   drawCloudBackground(ctx, canvas, camera);
 
   // Render teams in world coordinates relative to the local crew's camera.
@@ -215,7 +202,7 @@ function drawWorld(ctx, state, canvas, pointer) {
       ctx.stroke();
     }
     ctx.fillStyle = "#182b35";
-    ctx.font = "bold 12px system-ui";
+    ctx.font = 'bold 12px "Silkscreen", monospace';
     ctx.textAlign = "center";
     ctx.fillText("CAPTURE · +150", x, y - 20);
     ctx.restore();

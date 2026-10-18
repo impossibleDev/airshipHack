@@ -111,8 +111,9 @@ test("respawning restores a destroyed plane and resets its crew", () => {
   player.mountedTileId = pilotSeat.id;
   player.setInput({ thrust: 1 });
   player.x = 4;
-  team.plane.health = 0;
-  team.score = 75;
+  team.awardScore(75);
+  team.spawnProtectedUntil = 0;
+  assert.equal(team.takeDamage(team.plane.health), true);
   game.teams.set(team.id, team);
   game.players.set(player.id, player);
 
@@ -128,7 +129,34 @@ test("respawning restores a destroyed plane and resets its crew", () => {
   assert.equal(team.isSpawnProtected(), true);
 });
 
-// Turrets cannot fire without generator power and the pilot gets an explanation.
+// A turret must have an adjacent working generator before it can be activated.
+test("turrets cannot be activated without an adjacent working generator", () => {
+  const notices = [];
+  const game = new Game({
+    emit() {},
+    to() {
+      return { emit: (event, message) => notices.push(message) };
+    },
+  });
+  const team = new Team("Crew", 0);
+  const player = new Player("pilot-1", "Pilot", team.id);
+  const turret = createTile("turret");
+  team.plane.tiles[0][0] = turret;
+  player.x = 0;
+  player.y = 0;
+  game.teams.set(team.id, team);
+  game.players.set(player.id, player);
+
+  game.interact({ id: player.id }, { x: 0, y: 0 });
+  assert.equal(player.mountedTileId, null);
+  assert.deepEqual(notices, ["Turrets need an adjacent working generator."]);
+
+  team.plane.tiles[0][1] = createTile("generator");
+  game.interact({ id: player.id }, { x: 0, y: 0 });
+  assert.equal(player.mountedTileId, turret.id);
+});
+
+// A turret stops firing when its adjacent generator breaks.
 test("broken generators disable turret fire", () => {
   const notices = [];
   const game = new Game({
@@ -141,7 +169,8 @@ test("broken generators disable turret fire", () => {
   const player = new Player("pilot-1", "Pilot", team.id);
   const turret = createTile("turret");
   team.plane.tiles[1][3] = turret;
-  team.plane.getTile(2, 2).broken = true;
+  team.plane.tiles[1][2] = createTile("generator");
+  team.plane.getTile(2, 1).broken = true;
   turret.mountedBy = player.id;
   player.mountedTileId = turret.id;
   game.teams.set(team.id, team);
@@ -150,7 +179,33 @@ test("broken generators disable turret fire", () => {
   game.fire({ id: player.id }, { x: 4, y: 1 });
 
   assert.equal(game.projectiles.size, 0);
-  assert.deepEqual(notices, ["Weapons offline. Repair a generator to restore ship power."]);
+  assert.deepEqual(notices, ["Weapons offline. Turrets need an adjacent working generator."]);
+});
+
+// Repairing a generator restores power without spending team resources.
+test("repairing a generator is free", () => {
+  const notices = [];
+  const game = new Game({
+    emit() {},
+    to() {
+      return { emit: (event, message) => notices.push(message) };
+    },
+  });
+  const team = new Team("Crew", 0);
+  const player = new Player("pilot-1", "Pilot", team.id);
+  const generator = team.plane.getTile(2, 2);
+  generator.broken = true;
+  team.plane.resources = 0;
+  player.x = 2;
+  player.y = 2;
+  game.teams.set(team.id, team);
+  game.players.set(player.id, player);
+
+  game.interact({ id: player.id }, { x: 2, y: 2 });
+
+  assert.equal(generator.broken, false);
+  assert.equal(team.plane.resources, 0);
+  assert.deepEqual(notices, ["Generator repaired."]);
 });
 
 // The simulation tick reflects pellets before they can damage the ship behind a wall.
@@ -240,6 +295,7 @@ test("spawn-protected crew can shoot outward and damage an unprotected enemy", (
   const player = new Player("attacker", "Attacker", attacker.id);
   const turret = createTile("turret");
   attacker.plane.tiles[1][3] = turret;
+  attacker.plane.tiles[1][2] = createTile("generator");
   turret.mountedBy = player.id;
   player.mountedTileId = turret.id;
   game.teams.set(attacker.id, attacker);
