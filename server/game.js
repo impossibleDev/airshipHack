@@ -59,6 +59,7 @@ class Game {
     }
     if (!team) {
       team = new Team(teamName, this.teams.size);
+      team.name = this.uniqueTeamName(team.name);
       this.teams.set(team.id, team);
       this.arena.expandToInclude(team.plane.x, team.plane.y, 4);
       if (this.capturePoint.isNear(
@@ -76,6 +77,20 @@ class Game {
     this.players.set(socket.id, player);
     socket.emit("joined", this.joinInfo(player));
     this.broadcastState();
+  }
+
+  // Keep newly created crew names unique without changing existing crew names.
+  uniqueTeamName(name) {
+    const existingNames = new Set(
+      [...this.teams.values()].map((team) => team.name.trim().toLowerCase()),
+    );
+    let candidate = name;
+    let suffix = 2;
+    while (existingNames.has(candidate.toLowerCase())) {
+      candidate = `${name} (${suffix})`;
+      suffix += 1;
+    }
+    return candidate;
   }
 
   // Return the join response expected by the browser client.

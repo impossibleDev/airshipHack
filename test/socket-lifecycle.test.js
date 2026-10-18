@@ -75,3 +75,20 @@ test("repeated join events do not create duplicate players or teams", () => {
   assert.equal(game.players.size, 1);
   assert.equal(game.teams.size, 1);
 });
+
+// New crews with matching names receive case-insensitively unique crew names.
+test("duplicate crew names receive numbered suffixes", () => {
+  const game = new Game(new FakeIO());
+  const first = connect(game, "pilot-1");
+  const second = connect(game, "pilot-2");
+  const third = connect(game, "pilot-3");
+
+  first.emit("join", { name: "Pilot" });
+  second.emit("join", { name: "Pilot" });
+  third.emit("join", { name: "pilot" });
+
+  assert.deepEqual(
+    [...game.teams.values()].map((team) => team.name),
+    ["Pilot's crew", "Pilot's crew (2)", "pilot's crew (3)"],
+  );
+});

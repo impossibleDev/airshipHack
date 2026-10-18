@@ -99,7 +99,8 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
       const tileY = -height / 2 + row * TILE_SIZE;
       ctx.strokeStyle = "#293f4328";
       ctx.lineWidth = 1;
-      ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+      // Keep the deck free of the visible grid border.
+      // ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
       if (tile) {
         const turretAngle = tile.id === controlledTurretId && localAim
           ? Math.atan2(localAim.y - row - 0.5, localAim.x - col - 0.5)
