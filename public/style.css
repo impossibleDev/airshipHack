@@ -1,62 +1,78 @@
 * { box-sizing: border-box; }
-/* Keep the game surface full-screen and use a consistent HUD type palette. */
-body { margin: 0; overflow: hidden; background: #acd2d6; color: #182b35; font: 16px "Pixelify Sans", system-ui, sans-serif; }
+:root {
+  color-scheme: dark;
+  --ink: #21130e;
+  --ink-soft: #30201c;
+  --panel: #21130eee;
+  --panel-solid: #21130e;
+  --cream: #fff7ce;
+  --cream-dim: #c8c0a0;
+  --line: #827866;
+  --danger: #ff978a;
+}
+body { margin: 0; overflow: hidden; background: #acd2d6; color: var(--cream); font: 16px "Pixelify Sans", system-ui, sans-serif; }
 button, input { font: inherit; }
 #game { display: block; width: 100vw; height: 100vh; }
-/* Shared floating-panel treatment for HUD, join form, and notifications. */
-#team-banner, #build-menu, #leaderboard, #status-bar, #join-screen, #toast {
-  position: fixed; z-index: 1; padding: 10px; background: #fffef0e8; border: 1px solid #52697255; border-radius: 5px;
+#team-banner, #build-menu, #leaderboard, #status-bar, #toast, #help-button, #onboarding {
+  position: fixed; z-index: 1; padding: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--cream);
 }
 #team-banner { top: 10px; left: 10px; }
-/* Keep build options centered along the left edge of the play area. */
 #build-menu { top: 50%; left: 10px; width: 140px; transform: translateY(-50%); }
 #build-menu strong, #leaderboard strong { display: block; margin-bottom: 7px; font: 12px "Silkscreen", monospace; }
 #tile-options { display: grid; gap: 4px; }
-/* Highlight the tile that will be placed by the next build action. */
-.tile-option { display: flex; justify-content: space-between; padding: 5px; border: 1px solid #89999a; border-radius: 3px; background: #fff; cursor: pointer; }
-.tile-option.selected { border-color: #bc762b; background: #ffe8b0; }
+.tile-option { display: flex; justify-content: space-between; padding: 5px; border: 1px solid var(--line); background: var(--ink-soft); color: var(--cream); cursor: pointer; }
+.tile-option.selected { border-color: var(--cream); background: #554b3a; color: #fff; }
 #leaderboard { top: 10px; right: 10px; min-width: 150px; }
 .crew-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
-/* Circular minimap panel scales down for narrow screens. */
 #mini-map-panel { position: fixed; z-index: 1; right: 10px; bottom: 10px; width: 166px; }
 #mini-map { display: block; width: 150px; max-width: 100%; height: auto; aspect-ratio: 1; margin: 0 auto; border-radius: 50%; }
 #status-bar { bottom: 10px; left: 50%; transform: translateX(-50%); }
-/* Keep joining above game HUD panels and center it over the world. */
-#join-screen { z-index: 3; top: 50%; left: 50%; display: flex; width: min(300px, 90vw); flex-direction: column; gap: 8px; transform: translate(-50%, -50%); }
+#join-screen {
+  position: fixed; z-index: 3; top: 50%; left: 50%; display: flex; width: min(360px, 90vw);
+  flex-direction: column; gap: 9px; padding: 22px; transform: translate(-50%, -50%);
+  border: 2px solid var(--cream); background: var(--panel-solid); color: var(--cream);
+  box-shadow: 8px 8px 0 #10111399;
+}
 #join-screen.hidden { display: none; }
-#join-screen input, #join-screen button { padding: 8px; }
-#join-error, #toast { color: #9e342c; }
+.start-logo { display: block; width: 100%; height: auto; margin: 0 0 5px; image-rendering: pixelated; }
+#join-screen label { margin-top: 3px; color: var(--cream); font: 11px "Silkscreen", monospace; letter-spacing: .06em; }
+#join-screen label span { margin-left: 5px; color: var(--cream-dim); font: 10px "Pixelify Sans", system-ui, sans-serif; }
+#join-screen input, #join-screen button { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--line); }
+#join-screen input { outline: none; background: #17120f; color: var(--cream); }
+#join-screen input::placeholder { color: #9d9586; }
+#join-screen input:focus { border-color: var(--cream); }
+#join-screen button { margin-top: 4px; border-color: var(--cream); background: var(--cream); color: var(--ink); font: 13px "Silkscreen", monospace; cursor: pointer; }
+#join-screen button:hover { background: #e7dfb8; }
+#join-error { min-height: 1em; color: var(--danger); }
 #toast { top: 10px; left: 50%; display: none; transform: translateX(-50%); }
 #toast.visible { display: block; }
-/* Give combat events a brief screen cue without blocking player controls. */
 #damage-flash { position: fixed; z-index: 2; inset: 0; opacity: 0; pointer-events: none; }
 #damage-flash.active { animation: damage-flash 420ms ease-out; }
 @keyframes damage-flash { 0% { opacity: 0; } 18% { opacity: .42; background: #d4493f; } 100% { opacity: 0; } }
 .combat-feedback { position: fixed; z-index: 3; top: 43%; left: 50%; opacity: 0; transform: translate(-50%, 12px) scale(.92); pointer-events: none; font: clamp(20px, 4vw, 34px) "Silkscreen", monospace; letter-spacing: .04em; text-shadow: 0 2px 8px #10232c; transition: opacity 120ms, transform 120ms; }
 .combat-feedback.visible { opacity: 1; transform: translate(-50%, 0) scale(1); }
 .combat-feedback.damage, .combat-feedback.impact { color: #ffd0bd; }
-.combat-feedback.hit { color: #fff2a6; }
+.combat-feedback.hit { color: var(--cream); }
 .combat-feedback.protected, .combat-feedback.blocked { color: #a9f4ff; }
-/* Keep controls available after the first-time walkthrough is dismissed. */
-#help-button { position: fixed; z-index: 2; top: 54px; left: 10px; padding: 6px 10px; border: 1px solid #52697255; border-radius: 5px; background: #fffef0e8; color: #182b35; cursor: pointer; }
-#onboarding { position: fixed; z-index: 2; top: 94px; left: 10px; width: min(340px, calc(100vw - 20px)); padding: 14px; border: 1px solid #52697255; border-radius: 6px; background: #fffef0f5; box-shadow: 0 8px 28px #10232c33; font-size: 15px; }
+#help-button { top: 54px; left: 10px; padding: 6px 10px; cursor: pointer; }
+#onboarding { z-index: 2; top: 94px; left: 10px; width: min(340px, calc(100vw - 20px)); padding: 14px; font-size: 15px; }
 #onboarding.hidden { display: none; }
 .onboarding-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .onboarding-heading h2 { margin: 0; font: 15px "Silkscreen", monospace; }
-#close-onboarding { border: 0; background: transparent; color: #526972; font-size: 22px; cursor: pointer; }
+#close-onboarding { border: 0; background: transparent; color: var(--cream); font-size: 22px; cursor: pointer; }
 #onboarding ul { display: grid; gap: 8px; padding-left: 20px; line-height: 1.4; }
-#onboarding p { margin: 10px 0 0; color: #526972; }
-kbd { padding: 1px 4px; border: 1px solid #aab4ae; border-radius: 3px; background: #fff; font: inherit; font-size: .9em; }
-/* Cover the world and HUD when the local crew's plane is destroyed. */
+#onboarding p { margin: 10px 0 0; color: var(--cream-dim); }
+kbd { padding: 1px 4px; border: 1px solid var(--line); background: var(--ink-soft); color: var(--cream); font: inherit; font-size: .9em; }
 #game-over-screen { position: fixed; z-index: 4; inset: 0; display: grid; place-items: center; padding: 20px; background: #10232cbb; }
 #game-over-screen.hidden { display: none; }
-.game-over-card { width: min(420px, 100%); padding: 30px; border: 1px solid #f2b54a88; border-radius: 8px; background: #fffef0; text-align: center; box-shadow: 0 16px 48px #07151c66; }
-.game-over-eyebrow { margin: 0; color: #9e342c; font-size: 11px; font-weight: 700; letter-spacing: .16em; }
+.game-over-card { width: min(420px, 100%); padding: 30px; border: 2px solid var(--cream); background: var(--panel-solid); color: var(--cream); text-align: center; box-shadow: 8px 8px 0 #07151c66; }
+.game-over-eyebrow { margin: 0; color: var(--danger); font-size: 11px; font-weight: 700; letter-spacing: .16em; }
 .game-over-card h1 { margin: 8px 0; font: 28px "Silkscreen", monospace; }
-.game-over-card p:not(.game-over-eyebrow) { margin: 0 0 20px; color: #526972; line-height: 1.5; }
-#respawn-button { padding: 10px 24px; border: 0; border-radius: 4px; background: #bc762b; color: #fffef0; font-weight: 700; cursor: pointer; }
-#respawn-button:hover { background: #9e5c1f; }
-/* Shift and shrink the minimap on phones to avoid overlapping the status bar. */
+.game-over-card p:not(.game-over-eyebrow) { margin: 0 0 20px; color: var(--cream-dim); line-height: 1.5; }
+#respawn-button { padding: 10px 24px; border: 1px solid var(--cream); background: var(--cream); color: var(--ink); font-weight: 700; cursor: pointer; }
+#respawn-button:hover { background: #e7dfb8; }
 @media (max-width: 640px) {
   #mini-map-panel { right: 8px; bottom: 58px; width: 150px; }
+  #join-screen { gap: 7px; padding: 16px; }
+  .start-logo { margin-bottom: 2px; }
 }

@@ -14,10 +14,13 @@
     <canvas id="game"></canvas>
     <!-- Join overlay stays visible until the server confirms the pilot has joined. -->
     <form id="join-screen">
-      <input id="pilot-name" maxlength="18" placeholder="Pilot name" required>
-      <input id="invite-code" maxlength="6" placeholder="Team code (optional)">
-      <button>Join game</button>
-      <span id="join-error"></span>
+      <img class="start-logo" src="/images/logo.png" alt="Sky Dominion">
+      <label for="pilot-name">PILOT NAME</label>
+      <input id="pilot-name" maxlength="18" placeholder="Enter your name" required>
+      <label for="invite-code">TEAM INVITE <span>OPTIONAL</span></label>
+      <input id="invite-code" maxlength="6" placeholder="Enter invite code">
+      <button>JOIN GAME</button>
+      <span id="join-error" role="alert"></span>
     </form>
     <!-- HUD panels show crew identity, build choices, standings, and map overview. -->
     <header id="team-banner"></header>
