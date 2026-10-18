@@ -8,6 +8,7 @@ const images = Object.fromEntries(
     pilot: "/images/pilotSeat.png",
     generator: "/images/generatorFixed.png",
     generatorBroken: "/images/generatorBroken.png",
+    wall: "/images/wall.png",
   }).map(([name, src]) => {
     const image = new Image();
     image.src = src;
@@ -47,8 +48,13 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
     ? images.pilot
     : tile.type === "generator"
       ? (tile.broken ? images.generatorBroken : images.generator)
+      : tile.type === "wall"
+        ? images.wall
       : null;
   if (image && drawImage(ctx, image, x, y)) {
+    if (tile.type === "wall") {
+      drawWallDurability(ctx, tile, x, y);
+    }
     if (tile.mountedBy) {
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 2;
@@ -70,13 +76,7 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(symbols[tile.type] || "?", x + TILE_SIZE / 2, y + TILE_SIZE / 2);
-  if (tile.type === "wall") {
-    const durability = Math.max(0, tile.durability / tile.maxDurability);
-    ctx.fillStyle = "#293f43";
-    ctx.fillRect(x + 8, y + TILE_SIZE - 9, TILE_SIZE - 16, 4);
-    ctx.fillStyle = durability > 0.3 ? "#75b994" : "#d46954";
-    ctx.fillRect(x + 8, y + TILE_SIZE - 9, (TILE_SIZE - 16) * durability, 4);
-  }
+  if (tile.type === "wall") drawWallDurability(ctx, tile, x, y);
   if (tile.mountedBy) {
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
@@ -84,6 +84,15 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
     ctx.arc(x + TILE_SIZE / 2, y + TILE_SIZE / 2, 19, 0, Math.PI * 2);
     ctx.stroke();
   }
+}
+
+// Show remaining wall hits over either the sprite or its loading fallback.
+function drawWallDurability(ctx, tile, x, y) {
+  const durability = Math.max(0, tile.durability / tile.maxDurability);
+  ctx.fillStyle = "#293f43";
+  ctx.fillRect(x + 8, y + TILE_SIZE - 9, TILE_SIZE - 16, 4);
+  ctx.fillStyle = durability > 0.3 ? "#75b994" : "#d46954";
+  ctx.fillRect(x + 8, y + TILE_SIZE - 9, (TILE_SIZE - 16) * durability, 4);
 }
 
 // Export tile rendering and sizing for the world renderer.
