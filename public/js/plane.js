@@ -13,7 +13,7 @@ function screenToTile(x, y, canvas, plane) {
   };
 }
 
-function drawPlane(ctx, team, index, camera, canvas, players) {
+function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId, ownTeamId) {
   const plane = team.plane;
   const x = canvas.clientWidth / 2 + (plane.x - camera.x) * TILE_SIZE;
   const y = canvas.clientHeight / 2 + (plane.y - camera.y) * TILE_SIZE;
@@ -31,6 +31,13 @@ function drawPlane(ctx, team, index, camera, canvas, players) {
   ctx.fill();
   ctx.stroke();
 
+  const localAim = team.id === ownTeamId && pointer.inside
+    ? screenToTile(pointer.x, pointer.y, canvas, plane)
+    : null;
+  const controlledTurretId = players.find(
+    (player) => player.id === playerId && player.mountedTileId,
+  )?.mountedTileId;
+
   for (let row = 0; row < HEIGHT; row++) {
     for (let col = 0; col < WIDTH; col++) {
       const tile = plane.tiles[row][col];
@@ -39,7 +46,12 @@ function drawPlane(ctx, team, index, camera, canvas, players) {
       ctx.strokeStyle = "#293f4328";
       ctx.lineWidth = 1;
       ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
-      if (tile) drawTile(ctx, tile, tileX, tileY);
+      if (tile) {
+        const turretAngle = tile.id === controlledTurretId && localAim
+          ? Math.atan2(localAim.y - row - 0.5, localAim.x - col - 0.5)
+          : 0;
+        drawTile(ctx, tile, tileX, tileY, turretAngle);
+      }
     }
   }
   for (const player of players.filter((item) => item.teamId === team.id && !item.mountedTileId)) {
@@ -74,7 +86,9 @@ function drawWorld(ctx, state, canvas, pointer) {
 
   const ownTeam = state.teams.find((team) => team.id === state.teamId);
   const camera = ownTeam ? ownTeam.plane : { x: 0, y: 0 };
-  state.teams.forEach((team, index) => drawPlane(ctx, team, index, camera, canvas, state.players));
+  state.teams.forEach((team, index) =>
+    drawPlane(ctx, team, index, camera, canvas, state.players, pointer, state.playerId, state.teamId),
+  );
 
   for (const shot of state.projectiles) {
     ctx.fillStyle = "#fff2a6";
