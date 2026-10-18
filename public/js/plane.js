@@ -1,7 +1,7 @@
 import { drawTile, TILE_SIZE } from "./tiles.js";
 
-const WIDTH = 9;
-const HEIGHT = 5;
+const WIDTH = 5;
+const HEIGHT = 3;
 const COLORS = ["#e9ab54", "#db6f58", "#86a6e7", "#64bb9b", "#bd8ad1", "#d4a15d"];
 
 function screenToTile(x, y, canvas, plane) {

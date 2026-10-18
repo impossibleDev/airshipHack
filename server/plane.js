@@ -1,8 +1,8 @@
 const { randomUUID } = require("node:crypto");
 const { createTile, TILE_COSTS } = require("./tiles");
 
-const WIDTH = 9;
-const HEIGHT = 5;
+const WIDTH = 5;
+const HEIGHT = 3;
 
 // Adjust these to tune how the plane handles.
 const TURN_SPEED = 1.7;
