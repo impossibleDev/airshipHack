@@ -151,7 +151,7 @@ function drawWorld(ctx, state, canvas, pointer) {
     ctx.fillStyle = "#182b35";
     ctx.font = "bold 12px system-ui";
     ctx.textAlign = "center";
-    ctx.fillText("CAPTURE · +50", x, y - 20);
+    ctx.fillText("CAPTURE · +150", x, y - 20);
     ctx.restore();
   }
   if (state.mapCircle) {
