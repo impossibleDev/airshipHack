@@ -18,9 +18,8 @@ button, input { font: inherit; }
 #leaderboard { top: 10px; right: 10px; min-width: 150px; }
 .crew-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
 /* Circular minimap panel scales down for narrow screens. */
-#mini-map-panel { position: fixed; z-index: 1; right: 10px; bottom: 10px; width: 180px; padding: 8px; background: #fffef0e8; border: 1px solid #52697288; border-radius: 5px; }
-#mini-map-panel strong { display: block; margin-bottom: 5px; font-size: 11px; }
-#mini-map { display: block; width: 150px; max-width: 100%; height: auto; aspect-ratio: 1; margin: 0 auto; border: 1px solid #526972; border-radius: 50%; }
+#mini-map-panel { position: fixed; z-index: 1; right: 10px; bottom: 10px; width: 166px; }
+#mini-map { display: block; width: 150px; max-width: 100%; height: auto; aspect-ratio: 1; margin: 0 auto; border-radius: 50%; }
 #status-bar { bottom: 10px; left: 50%; transform: translateX(-50%); }
 /* Keep joining above game HUD panels and center it over the world. */
 #join-screen { z-index: 3; top: 50%; left: 50%; display: flex; width: min(300px, 90vw); flex-direction: column; gap: 8px; transform: translate(-50%, -50%); }

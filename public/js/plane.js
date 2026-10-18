@@ -15,16 +15,15 @@ const cloudImages = [1, 2, 3].map((cloud) => {
   return image;
 });
 const cloudLayers = [
-  { parallax: 0.12, opacity: 0.35, drift: 0.003, size: [100, 190] },
-  { parallax: 0.28, opacity: 0.5, drift: 0.006, size: [140, 240] },
-  { parallax: 0.5, opacity: 0.65, drift: 0.01, size: [180, 290] },
+  { parallax: 0.12, opacity: 0.35, drift: 0.003 },
+  { parallax: 0.28, opacity: 0.5, drift: 0.006 },
+  { parallax: 0.5, opacity: 0.65, drift: 0.01 },
 ].map((layer) => ({
   ...layer,
   clouds: Array.from({ length: 18 }, () => ({
     x: Math.random(),
     y: Math.random(),
     image: cloudImages[Math.floor(Math.random() * cloudImages.length)],
-    size: layer.size[0] + Math.random() * (layer.size[1] - layer.size[0]),
   })),
 }));
 
@@ -47,7 +46,7 @@ function drawCloudBackground(ctx, canvas, camera) {
       const y = wrap(cloud.y * height - camera.y * TILE_SIZE * layer.parallax + now * layer.drift * 0.35, height);
       for (const offsetX of [-width, 0, width]) {
         for (const offsetY of [-height, 0, height]) {
-          ctx.drawImage(cloud.image, x + offsetX, y + offsetY, cloud.size, cloud.size);
+          ctx.drawImage(cloud.image, x + offsetX, y + offsetY);
         }
       }
     }
@@ -347,12 +346,6 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
     ctx.restore();
   });
   ctx.restore();
-
-  ctx.strokeStyle = "#f7e9c8";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  ctx.stroke();
 }
 
 // Share rendering and coordinate helpers with the game controller.
