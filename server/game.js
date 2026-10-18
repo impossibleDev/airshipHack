@@ -252,39 +252,39 @@ class Game {
         continue;
       }
       const hitWall = [...this.teams.values()].some((team) =>
-        team.plane.health > 0 && team.plane.receiveProjectile(shot),
+        team.id !== shot.teamId
+          && team.plane.health > 0
+          && team.plane.receiveProjectile(shot),
       );
       if (hitWall) continue;
 
       for (const team of this.teams.values()) {
-        if (team.id !== shot.teamId) {
-          const previousHealth = team.plane.health;
-          const destroyed = team.receiveProjectile(shot, 8);
-          if (destroyed === null) continue;
-          if (destroyed === "protected") {
-            this.sendCombatFeedback(team, { type: "protected" });
-            const attacker = this.teams.get(shot.teamId);
-            if (attacker) this.sendCombatFeedback(attacker, { type: "blocked" });
-            this.projectiles.delete(id);
-            break;
-          }
-          this.sendCombatFeedback(team, {
-            type: "damage",
-            amount: previousHealth - team.plane.health,
-          });
+        // Spawn protection applies only to the destination; shots can leave their owner's shield.
+        if (team.id === shot.teamId) continue;
+        const previousHealth = team.plane.health;
+        const destroyed = team.receiveProjectile(shot, 8);
+        if (destroyed === null) continue;
+        if (destroyed === "protected") {
+          this.sendCombatFeedback(team, { type: "protected" });
           const attacker = this.teams.get(shot.teamId);
-          if (attacker) {
-            this.sendCombatFeedback(attacker, {
-              type: "hit",
-              amount: previousHealth - team.plane.health,
-            });
-          }
-          if (destroyed) {
-            if (attacker) attacker.awardScore(KILL_SCORE);
-          }
+          if (attacker) this.sendCombatFeedback(attacker, { type: "blocked" });
           this.projectiles.delete(id);
           break;
         }
+        this.sendCombatFeedback(team, {
+          type: "damage",
+          amount: previousHealth - team.plane.health,
+        });
+        const attacker = this.teams.get(shot.teamId);
+        if (attacker) {
+          this.sendCombatFeedback(attacker, {
+            type: "hit",
+            amount: previousHealth - team.plane.health,
+          });
+        }
+        if (destroyed && attacker) attacker.awardScore(KILL_SCORE);
+        this.projectiles.delete(id);
+        break;
       }
     }
     this.broadcastState();

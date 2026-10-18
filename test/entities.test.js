@@ -172,6 +172,25 @@ test("game tick reflects incoming pellets from a ship wall", () => {
   assert.equal(game.projectiles.has(shot.id), true);
 });
 
+// Friendly pellets pass through their own walls without damaging or reflecting.
+test("game tick ignores friendly ship walls", () => {
+  const game = new Game({ emit() {} });
+  const team = new Team("Crew", 0);
+  team.plane.x = 30;
+  const wall = createTile("wall");
+  team.plane.tiles[1][2] = wall;
+  const shot = new Projectile(29, 0, 0, team.id);
+  game.teams.set(team.id, team);
+  game.projectiles.set(shot.id, shot);
+
+  game.update();
+
+  assert.equal(wall.durability, 10);
+  assert.ok(shot.vx > 0);
+  assert.equal(team.plane.health, 100);
+  assert.equal(game.projectiles.has(shot.id), true);
+});
+
 // Fresh crews ignore incoming shots and receive an explicit shield cue.
 test("spawn protection blocks incoming pellets without damage", () => {
   const feedback = [];
@@ -206,4 +225,33 @@ test("spawn protection blocks incoming pellets without damage", () => {
       { id: "attacker", event: "combat-feedback", payload: { type: "blocked" } },
     ],
   );
+});
+
+// A crew's own spawn shield does not stop its pellets from leaving the plane.
+test("spawn-protected crew can shoot outward and damage an unprotected enemy", () => {
+  const game = new Game({ emit() {}, to() { return { emit() {} }; } });
+  const attacker = new Team("Attacker", 0);
+  const defender = new Team("Defender", 1);
+  attacker.plane.x = 0;
+  attacker.plane.y = 0;
+  defender.plane.x = 8;
+  defender.plane.y = 0;
+  defender.spawnProtectedUntil = 0;
+  const player = new Player("attacker", "Attacker", attacker.id);
+  const turret = createTile("turret");
+  attacker.plane.tiles[1][3] = turret;
+  turret.mountedBy = player.id;
+  player.mountedTileId = turret.id;
+  game.teams.set(attacker.id, attacker);
+  game.teams.set(defender.id, defender);
+  game.players.set(player.id, player);
+
+  game.fire({ id: player.id }, { x: 4, y: 1 });
+  assert.equal(attacker.isSpawnProtected(), true);
+  assert.equal(game.projectiles.size, 1);
+  for (let tick = 0; tick < 10; tick++) game.update();
+
+  assert.equal(attacker.plane.health, 100);
+  assert.equal(defender.plane.health, 92);
+  assert.equal(game.projectiles.size, 0);
 });
