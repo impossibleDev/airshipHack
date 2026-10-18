@@ -31,11 +31,11 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
     ctx.fillStyle = "#ede8d9";
     ctx.fillRect(-width / 2, -height / 2, width, height);
   }
-  ctx.strokeStyle = COLORS[index % COLORS.length];
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.rect(-width / 2, -height / 2, width, height);
-  ctx.stroke();
+  //ctx.strokeStyle = COLORS[index % COLORS.length];
+  //ctx.lineWidth = 4;
+  //ctx.beginPath();
+  //ctx.rect(-width / 2, -height / 2, width, height);
+  //ctx.stroke();
 
   const localAim = team.id === ownTeamId && pointer.inside
     ? screenToTile(pointer.x, pointer.y, canvas, plane)
