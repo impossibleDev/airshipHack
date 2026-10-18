@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const Arena = require("../server/arena");
+const Game = require("../server/game");
 const Player = require("../server/player");
 const Projectile = require("../server/projectile");
 const Team = require("../server/team");
@@ -37,4 +38,21 @@ test("team owns damage and reports a single plane destruction", () => {
   assert.equal(team.receiveProjectile(projectile, 10), true);
   assert.equal(team.receiveProjectile(projectile, 10), null);
   assert.equal(team.plane.health, 0);
+});
+
+test("destroying an enemy plane awards the attacker 200 score", () => {
+  const game = new Game({ emit() {} });
+  const attacker = new Team("Attacker", 0);
+  const defender = new Team("Defender", 1);
+  defender.plane.health = 8;
+  game.teams.set(attacker.id, attacker);
+  game.teams.set(defender.id, defender);
+
+  const target = { x: defender.plane.x, y: defender.plane.y };
+  const shot = new Projectile(target.x - 0.7, target.y, 0, attacker.id);
+  game.projectiles.set(shot.id, shot);
+  game.update();
+
+  assert.equal(defender.plane.health, 0);
+  assert.equal(attacker.score, 200);
 });

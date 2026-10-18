@@ -6,6 +6,7 @@ const Team = require("./team");
 
 const TICK_MS = 50;
 const EMPTY_TEAM_TIMEOUT_MS = 30_000;
+const KILL_SCORE = 200;
 
 class Game {
   constructor(io) {
@@ -199,7 +200,7 @@ class Game {
           if (destroyed === null) continue;
           if (destroyed) {
             const attacker = this.teams.get(shot.teamId);
-            if (attacker) attacker.awardScore(1);
+            if (attacker) attacker.awardScore(KILL_SCORE);
           }
           this.projectiles.delete(id);
           break;
