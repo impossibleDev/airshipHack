@@ -76,6 +76,22 @@ test("repeated join events do not create duplicate players or teams", () => {
   assert.equal(game.teams.size, 1);
 });
 
+// A valid invite code joins a new connection to its existing crew.
+test("team invite code joins an active crew", () => {
+  const game = new Game(new FakeIO());
+  const host = connect(game, "pilot-1");
+  const guest = connect(game, "pilot-2");
+  host.emit("join", { name: "Host" });
+  const inviteCode = host.sent.find((message) => message.event === "joined").args[0].inviteCode;
+
+  guest.emit("join", { name: "Guest", inviteCode: ` ${inviteCode.toLowerCase()} ` });
+
+  const joined = guest.sent.find((message) => message.event === "joined").args[0];
+  assert.equal(joined.teamId, game.players.get("pilot-1").teamId);
+  assert.equal(game.teams.size, 1);
+  assert.equal([...game.players.values()].filter((player) => player.teamId === joined.teamId).length, 2);
+});
+
 // New crews with matching names receive case-insensitively unique crew names.
 test("duplicate crew names receive numbered suffixes", () => {
   const game = new Game(new FakeIO());

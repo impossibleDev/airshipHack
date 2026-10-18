@@ -23,7 +23,13 @@
       <span id="join-error" role="alert"></span>
     </form>
     <!-- HUD panels show crew identity, build choices, standings, and map overview. -->
-    <header id="team-banner"></header>
+    <header id="team-banner">
+      <span id="team-name"></span>
+      <span class="team-invite">INVITE <code id="team-invite-code"></code>
+        <button id="copy-invite" type="button" aria-label="Copy team invite code">COPY</button>
+      </span>
+      <span id="team-member-count"></span>
+    </header>
     <aside id="build-menu"><strong>BUILD · F</strong><div id="tile-options"></div></aside>
     <aside id="leaderboard"><strong>CREWS</strong><div id="leaderboard-list"></div></aside>
     <aside id="mini-map-panel" aria-label="Map overview">

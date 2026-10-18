@@ -47,6 +47,17 @@ function notify(message) {
   toastTimeout = setTimeout(() => toast.classList.remove("visible"), 2200);
 }
 
+document.getElementById("copy-invite").addEventListener("click", async () => {
+  const code = document.getElementById("team-invite-code").textContent;
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    notify("Team invite copied.");
+  } catch (error) {
+    notify("Couldn't copy invite. Select the code and copy it manually.");
+  }
+});
+
 // Put join failures beside the corresponding form fields.
 function showJoinError(message) {
   document.getElementById("join-error").textContent = message;
@@ -144,8 +155,10 @@ function updateHud() {
   }
   gameOverScreen.classList.toggle("hidden", team.plane.health > 0);
   const members = state.players.filter((item) => item.teamId === team.id).length;
-  document.getElementById("team-banner").textContent =
-    `${team.name} · invite ${team.inviteCode} · ${members} ${members === 1 ? "player" : "players"}`;
+  document.getElementById("team-name").textContent = team.name;
+  document.getElementById("team-invite-code").textContent = team.inviteCode;
+  document.getElementById("team-member-count").textContent =
+    `${members} ${members === 1 ? "player" : "players"}`;
   const leaderboard = document.getElementById("leaderboard-list");
   leaderboard.replaceChildren();
   for (const item of [...state.teams].sort((a, b) => b.score - a.score)) {
