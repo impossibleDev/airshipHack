@@ -3,6 +3,10 @@
 A browser-based multiplayer airship combat game. Crew up, fly your plane, build
 stations, and compete for the capture point.
 
+## Play online
+
+Play on the hosted server at [skybound-showdown.onrender.com](https://skybound-showdown.onrender.com/).
+
 ## Run locally
 
 1. Install [Node.js](https://nodejs.org/) and npm.
