@@ -4,8 +4,19 @@ import { drawTile, TILE_SIZE } from "./tiles.js";
 const WIDTH = 5;
 const HEIGHT = 3;
 const COLORS = ["#e9ab54", "#db6f58", "#86a6e7", "#64bb9b", "#bd8ad1", "#d4a15d"];
-const deckImage = new Image();
-deckImage.src = "/images/planeDeck.png";
+const deckImages = [1, 2, 3].map((deck) => {
+  const image = new Image();
+  image.src = `/images/planeDeck${deck}.png`;
+  return image;
+});
+const teamDecks = new Map();
+
+function getDeckImage(teamId) {
+  if (!teamDecks.has(teamId)) {
+    teamDecks.set(teamId, deckImages[Math.floor(Math.random() * deckImages.length)]);
+  }
+  return teamDecks.get(teamId);
+}
 
 // Convert a canvas point into a tile coordinate, undoing the plane's rotation.
 function screenToTile(x, y, canvas, plane) {
@@ -20,6 +31,7 @@ function screenToTile(x, y, canvas, plane) {
 // Render one crew's ship, its tiles, walking players, label, and health bar.
 function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId, ownTeamId) {
   const plane = team.plane;
+  const deckImage = getDeckImage(team.id);
   const x = canvas.clientWidth / 2 + (plane.x - camera.x) * TILE_SIZE;
   const y = canvas.clientHeight / 2 + (plane.y - camera.y) * TILE_SIZE;
   const width = WIDTH * TILE_SIZE;
