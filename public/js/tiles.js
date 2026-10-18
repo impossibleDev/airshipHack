@@ -1,4 +1,6 @@
+// All ship tiles use one world-to-canvas size.
 const TILE_SIZE = 48;
+// Load sprites once so tile rendering can reuse them on every animation frame.
 const images = Object.fromEntries(
   Object.entries({
     turretBase: "/images/turretBase.png",
@@ -13,12 +15,14 @@ const images = Object.fromEntries(
   }),
 );
 
+// Draw a sprite when its asset has loaded; report if a fallback is needed.
 function drawImage(ctx, image, x, y) {
   if (!image.complete || !image.naturalWidth) return false;
   ctx.drawImage(image, x, y, TILE_SIZE, TILE_SIZE);
   return true;
 }
 
+// Draw a tile sprite or symbol, including station occupancy and turret aim.
 function drawTile(ctx, tile, x, y, turretAngle = 0) {
   if (tile.type === "turret") {
     drawImage(ctx, images.turretBase, x, y);
@@ -75,4 +79,5 @@ function drawTile(ctx, tile, x, y, turretAngle = 0) {
   }
 }
 
+// Export tile rendering and sizing for the world renderer.
 export { drawTile, TILE_SIZE };

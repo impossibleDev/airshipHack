@@ -7,13 +7,16 @@
     <link rel="stylesheet" href="/style.css">
   </head>
   <body>
+    <!-- Full-screen world view; the game client renders ships and the arena here. -->
     <canvas id="game"></canvas>
+    <!-- Join overlay stays visible until the server confirms the pilot has joined. -->
     <form id="join-screen">
       <input id="pilot-name" maxlength="18" placeholder="Pilot name" required>
       <input id="invite-code" maxlength="6" placeholder="Team code (optional)">
       <button>Join game</button>
       <span id="join-error"></span>
     </form>
+    <!-- HUD panels show crew identity, build choices, standings, and map overview. -->
     <header id="team-banner"></header>
     <aside id="build-menu"><strong>BUILD · F</strong><div id="tile-options"></div></aside>
     <aside id="leaderboard"><strong>CREWS</strong><div id="leaderboard-list"></div></aside>
@@ -21,8 +24,11 @@
       <strong>MAP</strong>
       <canvas id="mini-map" aria-label="Map showing crew locations"></canvas>
     </aside>
+    <!-- Current role, plane health, and resources are summarized at the bottom. -->
     <footer id="status-bar"></footer>
+    <!-- Temporary notices are populated by the client when server events arrive. -->
     <div id="toast"></div>
+    <!-- Socket.IO supplies networking before the ES module game controller starts. -->
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="/js/main.js"></script>
   </body>

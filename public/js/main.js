@@ -1,13 +1,16 @@
 import { drawMiniMap, drawWorld, screenToTile } from "./plane.js";
 
+// Set up the visible canvases and the real-time connection to the game server.
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const miniMap = document.getElementById("mini-map");
 const miniMapCtx = miniMap.getContext("2d");
 const socket = io();
 const state = { teams: [], players: [], projectiles: [], playerId: null, teamId: null };
+// Keep held keyboard controls and pointer position between browser events.
 const keys = new Set();
 const pointer = { x: 0, y: 0, inside: false };
+// Build menu entries pair a server tile type with its displayed resource cost.
 const tileOptions = [
   ["turret", 35], ["wall", 10], ["generator", 50],
 ];
@@ -18,6 +21,7 @@ let hasJoined = false;
 let reconnecting = false;
 let toastTimeout;
 
+// Look up the local crew and pilot in the latest server snapshot.
 function ownTeam() {
   return state.teams.find((team) => team.id === state.teamId);
 }
@@ -26,6 +30,7 @@ function ownPlayer() {
   return state.players.find((player) => player.id === state.playerId);
 }
 
+// Show a temporary in-game message, replacing any message already displayed.
 function notify(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
@@ -34,10 +39,12 @@ function notify(message) {
   toastTimeout = setTimeout(() => toast.classList.remove("visible"), 2200);
 }
 
+// Put join failures beside the corresponding form fields.
 function showJoinError(message) {
   document.getElementById("join-error").textContent = message;
 }
 
+// Submit the pilot name and optional invite code to the server.
 document.getElementById("join-screen").addEventListener("submit", (event) => {
   event.preventDefault();
   pilotName = document.getElementById("pilot-name").value.trim();
@@ -45,6 +52,7 @@ document.getElementById("join-screen").addEventListener("submit", (event) => {
   socket.emit("join", { name: pilotName, inviteCode });
 });
 
+// Create the selectable build menu from the shared option list.
 for (const [type, cost] of tileOptions) {
   const button = document.createElement("button");
   button.className = `tile-option${type === selectedTile ? " selected" : ""}`;
@@ -57,6 +65,7 @@ for (const [type, cost] of tileOptions) {
   document.getElementById("tile-options").append(button);
 }
 
+// Restore the existing crew after reconnecting, or clear client state on loss.
 socket.on("connect", () => {
   if (hasJoined && !state.playerId) {
     reconnecting = true;
@@ -71,6 +80,7 @@ socket.on("disconnect", () => {
   document.getElementById("join-screen").classList.remove("hidden");
   notify("Disconnected. Reconnecting...");
 });
+// Retry without an expired invite when reconnecting to a crew that was removed.
 socket.on("join-error", (message) => {
   if (reconnecting && inviteCode) {
     inviteCode = "";
@@ -89,12 +99,14 @@ socket.on("joined", ({ playerId, teamId, inviteCode: code }) => {
   showJoinError("");
   document.getElementById("join-screen").classList.add("hidden");
 });
+// Replace local world state with authoritative server updates.
 socket.on("state", (next) => {
   Object.assign(state, next);
   updateHud();
 });
 socket.on("notice", notify);
 
+// Refresh crew details, leaderboard scores, and the player's current role.
 function updateHud() {
   const team = ownTeam();
   const player = ownPlayer();
@@ -120,11 +132,13 @@ function updateHud() {
     `${role} · plane ${Math.ceil(team.plane.health)} HP · ${team.plane.resources} resources`;
 }
 
+// Ask the server to interact at the pilot's current ship-grid location.
 function interact() {
   const player = ownPlayer();
   if (player) socket.emit("interact", { x: player.x, y: player.y });
 }
 
+// Build the selected tile at the current pointer target.
 function build() {
   const team = ownTeam();
   if (!team) return;
@@ -132,6 +146,7 @@ function build() {
   socket.emit("build", { x: Math.round(tile.x), y: Math.round(tile.y), type: selectedTile });
 }
 
+// Track pointer coordinates relative to the game canvas for aiming and building.
 canvas.addEventListener("pointermove", (event) => {
   const rect = canvas.getBoundingClientRect();
   pointer.x = event.clientX - rect.left;
@@ -139,6 +154,7 @@ canvas.addEventListener("pointermove", (event) => {
   pointer.inside = true;
 });
 canvas.addEventListener("pointerleave", () => { pointer.inside = false; });
+// Fire only when the local player is mounted at a turret.
 canvas.addEventListener("pointerdown", (event) => {
   if (event.button !== 0) return;
   const player = ownPlayer();
@@ -148,6 +164,7 @@ canvas.addEventListener("pointerdown", (event) => {
     socket.emit("fire", screenToTile(pointer.x, pointer.y, canvas, team.plane));
   }
 });
+// Translate keyboard presses into interactions, building, and menu selection.
 window.addEventListener("keydown", (event) => {
   if (event.target instanceof HTMLInputElement) return;
   const key = event.key.toLowerCase();
@@ -161,6 +178,7 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
 window.addEventListener("blur", () => keys.clear());
 
+// Send the current movement controls at the server's 20 Hz input rate.
 setInterval(() => {
   const player = ownPlayer();
   const team = ownTeam();
@@ -177,6 +195,7 @@ setInterval(() => {
   socket.emit("input", input);
 }, 50);
 
+// Match each canvas backing store to its display size and device pixel ratio.
 function resize() {
   const ratio = Math.min(devicePixelRatio || 1, 2);
   canvas.width = canvas.clientWidth * ratio;
@@ -189,6 +208,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
+// Draw both views continuously using the most recently received world state.
 function frame() {
   drawWorld(ctx, state, canvas, pointer);
   drawMiniMap(miniMapCtx, state, miniMap, canvas);

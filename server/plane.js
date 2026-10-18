@@ -4,14 +4,16 @@ const { createTile, TILE_COSTS } = require("./tiles");
 const WIDTH = 5;
 const HEIGHT = 3;
 
-// Adjust these to tune how the plane handles.
+// Shared flight and on-deck movement tuning.
 const TURN_SPEED = 1.7;
 const THRUST_ACCELERATION = 6;
 const DRAG = 0.98;
 const MAX_SPEED = 8;
 const PLAYER_WALK_SPEED = 3;
 
+// Owns one airship's movement, tile grid, health, and resources.
 class Plane {
+  // Create a plane at its crew's spawn slot with the required starter stations.
   constructor(index = 0) {
     this.id = randomUUID();
     this.x = (index % 6) * 12;
@@ -27,11 +29,13 @@ class Plane {
     this.tiles[2][2] = createTile("generator");
   }
 
+  // Return a tile only for an integer coordinate within the ship's grid.
   getTile(x, y) {
     if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return null;
     return this.tiles[y][x];
   }
 
+  // Find a mounted station by its unique tile id.
   findTile(id) {
     for (let y = 0; y < HEIGHT; y++) {
       for (let x = 0; x < WIDTH; x++) {
@@ -42,6 +46,7 @@ class Plane {
     return null;
   }
 
+  // Validate a placement and charge the crew before creating its tile.
   build(player, x, y, type, notice) {
     const cost = TILE_COSTS[type];
     if (!cost) return notice("Choose a tile from the build menu.");
@@ -55,6 +60,7 @@ class Plane {
     this.tiles[y][x] = createTile(type);
   }
 
+  // Update ship systems, pilot-controlled flight, and walking crew members.
   update(dt, players, noticeTeam, arena = null) {
     const now = Date.now();
     for (const row of this.tiles) {
@@ -83,6 +89,7 @@ class Plane {
 
     if (arena) arena.constrainPlane(this, Math.hypot(WIDTH / 2, HEIGHT / 2));
 
+    // Convert local movement input through the ship's rotation into world motion.
     const cos = Math.cos(this.angle);
     const sin = Math.sin(this.angle);
     for (const player of players) {
@@ -96,6 +103,7 @@ class Plane {
     }
   }
 
+  // Convert a tile coordinate into its rotated world-space position.
   tileToWorld(x, y) {
     const localX = x - (WIDTH - 1) / 2;
     const localY = y - (HEIGHT - 1) / 2;
@@ -107,6 +115,7 @@ class Plane {
     };
   }
 
+  // Test a world coordinate against the rotated rectangular hull.
   contains(x, y) {
     const dx = x - this.x;
     const dy = y - this.y;
@@ -115,6 +124,7 @@ class Plane {
     return Math.abs(localX) <= WIDTH / 2 && Math.abs(localY) <= HEIGHT / 2;
   }
 
+  // Return a network-safe copy of the plane and its tile grid.
   snapshot() {
     return {
       id: this.id,
@@ -129,4 +139,5 @@ class Plane {
   }
 }
 
+// Export the airship model.
 module.exports = Plane;

@@ -4,6 +4,7 @@ const Arena = require("../server/arena");
 const Plane = require("../server/plane");
 const Player = require("../server/player");
 
+// Player movement is world-relative even when the ship itself is rotated.
 test("world-down movement stays world-down on a rotated plane", () => {
   const plane = new Plane();
   plane.angle = Math.PI / 4;
@@ -22,6 +23,7 @@ test("world-down movement stays world-down on a rotated plane", () => {
   assert.ok(worldY > 0);
 });
 
+// Arena collision keeps the hull inside the circle and reflects outward speed.
 test("plane hull stays inside the circular map and bounces off the edge", () => {
   const plane = new Plane();
   plane.x = 10;

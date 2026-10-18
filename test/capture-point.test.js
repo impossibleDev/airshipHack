@@ -4,10 +4,12 @@ const CapturePoint = require("../server/capture-point");
 const Game = require("../server/game");
 const Team = require("../server/team");
 
+// Create a game with the minimal broadcast interface needed by simulation tests.
 function createGame() {
   return new Game({ emit() {} });
 }
 
+// Random objective placement must stay within the circular world boundary.
 test("capture points spawn inside the circular map", () => {
   const game = createGame();
   const distance = Math.hypot(
@@ -18,6 +20,7 @@ test("capture points spawn inside the circular map", () => {
   assert.ok(distance <= game.arena.radius - game.capturePoint.radius);
 });
 
+// A single crew holding the point for its full duration earns the reward.
 test("holding a capture point awards 50 score and moves the point", () => {
   const game = createGame();
   const team = new Team("Crew", 0);
@@ -34,6 +37,7 @@ test("holding a capture point awards 50 score and moves the point", () => {
   assert.notDeepEqual(game.capturePoint, oldPoint);
 });
 
+// Multiple crews in range contest the objective and prevent progress.
 test("contested capture points do not award score", () => {
   const game = createGame();
   const point = game.capturePoint;

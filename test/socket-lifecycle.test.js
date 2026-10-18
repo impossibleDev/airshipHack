@@ -5,6 +5,7 @@ const Game = require("../server/game");
 const Player = require("../server/player");
 const Team = require("../server/team");
 
+// Socket.IO test double that separates incoming client events from server replies.
 class FakeSocket extends EventEmitter {
   constructor(id) {
     super();
@@ -20,6 +21,7 @@ class FakeSocket extends EventEmitter {
   }
 }
 
+// Minimal room/broadcast API used by the game coordinator during tests.
 class FakeIO extends EventEmitter {
   emit(event, ...args) {
     if (event === "connection") return super.emit(event, ...args);
@@ -31,12 +33,14 @@ class FakeIO extends EventEmitter {
   }
 }
 
+// Connect a fake client and register the game's event handlers.
 function connect(game, id) {
   const socket = new FakeSocket(id);
   game.connect(socket);
   return socket;
 }
 
+// Disconnect releases occupied stations and allows the same crew to reconnect.
 test("disconnect removes the player, frees their station, and allows reconnect", () => {
   const game = new Game(new FakeIO());
   const first = connect(game, "pilot-1");
@@ -62,6 +66,7 @@ test("disconnect removes the player, frees their station, and allows reconnect",
   assert.equal(game.emptyTeamTimers.has(team.id), false);
 });
 
+// Duplicate join messages for one socket do not create extra game entities.
 test("repeated join events do not create duplicate players or teams", () => {
   const game = new Game(new FakeIO());
   const socket = connect(game, "pilot-1");

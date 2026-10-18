@@ -6,6 +6,7 @@ const Player = require("../server/player");
 const Projectile = require("../server/projectile");
 const Team = require("../server/team");
 
+// Inputs are clamped and snapshots expose only the client's required fields.
 test("player owns input normalization and exports a client snapshot", () => {
   const player = new Player("pilot-1", "Pilot", "crew-1");
   player.setInput({ thrust: 4, turn: -2, moveX: 0.5 });
@@ -21,6 +22,7 @@ test("player owns input normalization and exports a client snapshot", () => {
   });
 });
 
+// Shots move through the arena and expire after their configured lifetime.
 test("projectile owns movement, arena bounds, and expiry", () => {
   const arena = new Arena(0, 0, 10);
   const projectile = new Projectile(0, 0, 0, "crew-1", 0);
@@ -30,6 +32,7 @@ test("projectile owns movement, arena bounds, and expiry", () => {
   assert.equal(projectile.update(0.05, Projectile.LIFETIME, arena), false);
 });
 
+// Plane damage reports its destruction only once.
 test("team owns damage and reports a single plane destruction", () => {
   const team = new Team("Crew", 0);
   const projectile = { x: team.plane.x, y: team.plane.y };
@@ -40,6 +43,7 @@ test("team owns damage and reports a single plane destruction", () => {
   assert.equal(team.plane.health, 0);
 });
 
+// The final hit awards the attacking crew the configured kill score.
 test("destroying an enemy plane awards the attacker 200 score", () => {
   const game = new Game({ emit() {} });
   const attacker = new Team("Attacker", 0);

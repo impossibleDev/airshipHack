@@ -1,28 +1,35 @@
 * { box-sizing: border-box; }
+/* Keep the game surface full-screen and use a consistent HUD type palette. */
 body { margin: 0; overflow: hidden; background: #acd2d6; color: #182b35; font: 13px system-ui, sans-serif; }
 button, input { font: inherit; }
 #game { display: block; width: 100vw; height: 100vh; }
+/* Shared floating-panel treatment for HUD, join form, and notifications. */
 #team-banner, #build-menu, #leaderboard, #status-bar, #join-screen, #toast {
   position: fixed; z-index: 1; padding: 10px; background: #fffef0e8; border: 1px solid #52697255; border-radius: 5px;
 }
 #team-banner { top: 10px; left: 10px; }
+/* Keep build options centered along the left edge of the play area. */
 #build-menu { top: 50%; left: 10px; width: 140px; transform: translateY(-50%); }
 #build-menu strong, #leaderboard strong { display: block; margin-bottom: 7px; font-size: 11px; }
 #tile-options { display: grid; gap: 4px; }
+/* Highlight the tile that will be placed by the next build action. */
 .tile-option { display: flex; justify-content: space-between; padding: 5px; border: 1px solid #89999a; border-radius: 3px; background: #fff; cursor: pointer; }
 .tile-option.selected { border-color: #bc762b; background: #ffe8b0; }
 #leaderboard { top: 10px; right: 10px; min-width: 150px; }
 .crew-row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+/* Circular minimap panel scales down for narrow screens. */
 #mini-map-panel { position: fixed; z-index: 1; right: 10px; bottom: 10px; width: 180px; padding: 8px; background: #fffef0e8; border: 1px solid #52697288; border-radius: 5px; }
 #mini-map-panel strong { display: block; margin-bottom: 5px; font-size: 11px; }
 #mini-map { display: block; width: 150px; max-width: 100%; height: auto; aspect-ratio: 1; margin: 0 auto; border: 1px solid #526972; border-radius: 50%; }
 #status-bar { bottom: 10px; left: 50%; transform: translateX(-50%); }
+/* Keep joining above game HUD panels and center it over the world. */
 #join-screen { z-index: 3; top: 50%; left: 50%; display: flex; width: min(300px, 90vw); flex-direction: column; gap: 8px; transform: translate(-50%, -50%); }
 #join-screen.hidden { display: none; }
 #join-screen input, #join-screen button { padding: 8px; }
 #join-error, #toast { color: #9e342c; }
 #toast { top: 10px; left: 50%; display: none; transform: translateX(-50%); }
 #toast.visible { display: block; }
+/* Shift and shrink the minimap on phones to avoid overlapping the status bar. */
 @media (max-width: 640px) {
   #mini-map-panel { right: 8px; bottom: 58px; width: 150px; }
 }

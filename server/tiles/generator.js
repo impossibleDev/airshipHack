@@ -1,6 +1,8 @@
 const Tile = require("./tile");
 
+// Produces plane resources over time and periodically needs repairs.
 class Generator extends Tile {
+  // Initialize production and the first scheduled breakdown.
   constructor() {
     super("generator");
     this.broken = false;
@@ -8,6 +10,7 @@ class Generator extends Tile {
     this.nextIncomeAt = Date.now() + 1_000;
   }
 
+  // Allow crew to repair a broken generator by spending resources.
   interact(plane, player, x, y, notice) {
     if (player.mountedTileId) return super.interact(plane, player, x, y, notice);
     if (!this.broken) return notice("The generator is running.");
@@ -19,6 +22,7 @@ class Generator extends Tile {
     notice("Generator repaired.");
   }
 
+  // Break the generator on schedule and add resources while it is running.
   update(plane, now, noticeTeam) {
     if (!this.broken && now >= this.nextBreakAt) {
       this.broken = true;
@@ -31,4 +35,5 @@ class Generator extends Tile {
   }
 }
 
+// Export the resource-producing tile.
 module.exports = Generator;

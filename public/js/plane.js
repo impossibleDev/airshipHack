@@ -1,11 +1,13 @@
 import { drawTile, TILE_SIZE } from "./tiles.js";
 
+// Local airship dimensions and the palette used for crew indicators.
 const WIDTH = 5;
 const HEIGHT = 3;
 const COLORS = ["#e9ab54", "#db6f58", "#86a6e7", "#64bb9b", "#bd8ad1", "#d4a15d"];
 const deckImage = new Image();
 deckImage.src = "/images/planeDeck.png";
 
+// Convert a canvas point into a tile coordinate, undoing the plane's rotation.
 function screenToTile(x, y, canvas, plane) {
   const dx = (x - canvas.clientWidth / 2) / TILE_SIZE;
   const dy = (y - canvas.clientHeight / 2) / TILE_SIZE;
@@ -15,6 +17,7 @@ function screenToTile(x, y, canvas, plane) {
   };
 }
 
+// Render one crew's ship, its tiles, walking players, label, and health bar.
 function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId, ownTeamId) {
   const plane = team.plane;
   const x = canvas.clientWidth / 2 + (plane.x - camera.x) * TILE_SIZE;
@@ -31,12 +34,8 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
     ctx.fillStyle = "#ede8d9";
     ctx.fillRect(-width / 2, -height / 2, width, height);
   }
-  //ctx.strokeStyle = COLORS[index % COLORS.length];
-  //ctx.lineWidth = 4;
-  //ctx.beginPath();
-  //ctx.rect(-width / 2, -height / 2, width, height);
-  //ctx.stroke();
 
+  // Only the local crew needs a live aim target for its mounted turret.
   const localAim = team.id === ownTeamId && pointer.inside
     ? screenToTile(pointer.x, pointer.y, canvas, plane)
     : null;
@@ -44,6 +43,7 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
     (player) => player.id === playerId && player.mountedTileId,
   )?.mountedTileId;
 
+  // Draw each grid cell and its installed tile in the ship's local coordinates.
   for (let row = 0; row < HEIGHT; row++) {
     for (let col = 0; col < WIDTH; col++) {
       const tile = plane.tiles[row][col];
@@ -60,6 +60,7 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
       }
     }
   }
+  // Walking crew members are positioned relative to the ship deck.
   for (const player of players.filter((item) => item.teamId === team.id && !item.mountedTileId)) {
     const px = -width / 2 + (player.x + 0.5) * TILE_SIZE;
     const py = -height / 2 + (player.y + 0.5) * TILE_SIZE;
@@ -83,12 +84,14 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
   ctx.fillRect(x - 45, y + height / 2 + 5, 90 * plane.health / plane.maxHealth, 4);
 }
 
+// Draw the arena, all crews, the objective, projectiles, and the build target.
 function drawWorld(ctx, state, canvas, pointer) {
   ctx.fillStyle = "#7da9b4";
   ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
   const ownTeam = state.teams.find((team) => team.id === state.teamId);
   const camera = ownTeam ? ownTeam.plane : { x: 0, y: 0 };
+  // Clip the playable background visually to the server-defined circular arena.
   if (state.mapCircle) {
     const circle = state.mapCircle;
     const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
@@ -103,10 +106,12 @@ function drawWorld(ctx, state, canvas, pointer) {
     ctx.fill();
   }
 
+  // Render teams in world coordinates relative to the local crew's camera.
   state.teams.forEach((team, index) =>
     drawPlane(ctx, team, index, camera, canvas, state.players, pointer, state.playerId, state.teamId),
   );
 
+  // Draw active shots before overlays so objective indicators remain visible.
   for (const shot of state.projectiles) {
     ctx.fillStyle = "#fff2a6";
     ctx.beginPath();
@@ -117,6 +122,7 @@ function drawWorld(ctx, state, canvas, pointer) {
     );
     ctx.fill();
   }
+  // Show the capture radius and team-colored progress ring.
   if (state.capturePoint) {
     const point = state.capturePoint;
     const x = canvas.clientWidth / 2 + (point.x - camera.x) * TILE_SIZE;
@@ -154,6 +160,7 @@ function drawWorld(ctx, state, canvas, pointer) {
     ctx.fillText("CAPTURE · +150", x, y - 20);
     ctx.restore();
   }
+  // Outline the map edge over the arena background and other world objects.
   if (state.mapCircle) {
     const circle = state.mapCircle;
     const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
@@ -171,6 +178,7 @@ function drawWorld(ctx, state, canvas, pointer) {
     ctx.stroke();
     ctx.restore();
   }
+  // Preview the tile cell that a build command will target.
   if (ownTeam && pointer.inside) {
     const tile = screenToTile(pointer.x, pointer.y, canvas, ownTeam.plane);
     const x = canvas.clientWidth / 2 + (ownTeam.plane.x - camera.x) * TILE_SIZE;
@@ -188,6 +196,7 @@ function drawWorld(ctx, state, canvas, pointer) {
   }
 }
 
+// Draw a top-down overview scaled to the minimap's circular viewport.
 function drawMiniMap(ctx, state, miniMap, gameCanvas) {
   const width = miniMap.clientWidth;
   const height = miniMap.clientHeight;
@@ -205,6 +214,7 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
   const mapX = (x) => centerX + (x - circle.x) * scale;
   const mapY = (y) => centerY + (y - circle.y) * scale;
 
+  // Clip grid lines and markers to the circle so nothing leaks outside the map.
   ctx.fillStyle = "#b9d4ca";
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -228,6 +238,7 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
     ctx.stroke();
   }
 
+  // Outline the portion of the world currently visible in the main canvas.
   const ownTeam = state.teams.find((team) => team.id === state.teamId);
   if (ownTeam) {
     const viewWidth = gameCanvas.clientWidth / TILE_SIZE;
@@ -242,6 +253,7 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
     );
   }
 
+  // Place the capture objective and its current progress ring.
   if (state.capturePoint) {
     const point = state.capturePoint;
     const pointX = mapX(point.x);
@@ -265,6 +277,7 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
     }
   }
 
+  // Draw crew arrows using plane heading and highlight the local crew.
   state.teams.forEach((team, index) => {
     const plane = team.plane;
     ctx.save();
@@ -292,4 +305,5 @@ function drawMiniMap(ctx, state, miniMap, gameCanvas) {
   ctx.stroke();
 }
 
+// Share rendering and coordinate helpers with the game controller.
 export { drawMiniMap, drawWorld, screenToTile, TILE_SIZE };

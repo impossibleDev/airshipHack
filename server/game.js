@@ -6,9 +6,12 @@ const Team = require("./team");
 
 const TICK_MS = 50;
 const EMPTY_TEAM_TIMEOUT_MS = 30_000;
+// Score paid when a crew destroys an enemy plane.
 const KILL_SCORE = 200;
 
+// Coordinates multiplayer events and advances the authoritative game state.
 class Game {
+  // Create shared world state and the initial neutral capture objective.
   constructor(io) {
     this.io = io;
     this.teams = new Map();
@@ -19,12 +22,14 @@ class Game {
     this.capturePoint = new CapturePoint(this.arena, this.teams.values());
   }
 
+  // Register connection handling and start the fixed-rate simulation loop.
   start() {
     this.io.on("connection", (socket) => this.connect(socket));
     const timer = setInterval(() => this.update(), TICK_MS);
     timer.unref();
   }
 
+  // Bind one socket's incoming events to the corresponding game actions.
   connect(socket) {
     socket.on("join", (details = {}) => this.join(socket, details || {}));
     socket.on("input", (input = {}) => this.setInput(socket, input || {}));
@@ -34,6 +39,7 @@ class Game {
     socket.on("disconnect", () => this.disconnect(socket));
   }
 
+  // Validate a crew invitation and add the connecting pilot to a crew.
   join(socket, { name, inviteCode } = {}) {
     const existing = this.players.get(socket.id);
     if (existing) {
@@ -69,6 +75,7 @@ class Game {
     this.broadcastState();
   }
 
+  // Return the join response expected by the browser client.
   joinInfo(player) {
     return {
       playerId: player.id,
@@ -77,16 +84,19 @@ class Game {
     };
   }
 
+  // Place a fresh objective using the current arena and crew locations.
   createCapturePoint() {
     return new CapturePoint(this.arena, this.teams.values());
   }
 
+  // Store validated movement controls for the connected player.
   setInput(socket, input) {
     const player = this.players.get(socket.id);
     if (!player) return;
     player.setInput(input);
   }
 
+  // Interact with a nearby ship tile or leave the player's current station.
   interact(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
@@ -121,6 +131,7 @@ class Game {
     }
   }
 
+  // Ask the player's crew plane to place a tile at the requested grid cell.
   build(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
@@ -134,6 +145,7 @@ class Game {
     );
   }
 
+  // Fire only when the player is mounted at a ready turret.
   fire(socket, position) {
     const player = this.players.get(socket.id);
     const team = player && this.teams.get(player.teamId);
@@ -150,6 +162,7 @@ class Game {
     this.projectiles.set(projectile.id, projectile);
   }
 
+  // Free the player's station and schedule removal of an empty crew.
   disconnect(socket) {
     const player = this.players.get(socket.id);
     if (!player) return;
@@ -171,6 +184,7 @@ class Game {
     this.broadcastState();
   }
 
+  // Advance planes, capture progress, and projectiles, then publish the state.
   update() {
     const dt = TICK_MS / 1000;
     for (const team of this.teams.values()) {
@@ -188,6 +202,7 @@ class Game {
 
     this.updateCapturePoint(dt);
 
+    // A destroyed plane awards points once; its later hits are ignored.
     const now = Date.now();
     for (const [id, shot] of this.projectiles) {
       if (!shot.update(dt, now, this.arena)) {
@@ -210,6 +225,7 @@ class Game {
     this.broadcastState();
   }
 
+  // Award completed captures and relocate the objective for the next round.
   updateCapturePoint(dt) {
     const team = this.capturePoint.update(this.teams.values(), dt);
     if (!team) return;
@@ -223,6 +239,7 @@ class Game {
     this.capturePoint = this.createCapturePoint();
   }
 
+  // Send serializable entity snapshots rather than server-side objects.
   broadcastState() {
     this.io.emit("state", {
       mapCircle: this.arena.snapshot(),
@@ -233,9 +250,11 @@ class Game {
     });
   }
 
+  // Send a private status message to one player.
   notice(player, message) {
     this.io.to(player.id).emit("notice", message);
   }
 }
 
+// Export the game coordinator for the server entry point.
 module.exports = Game;
