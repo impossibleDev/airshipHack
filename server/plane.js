@@ -1,4 +1,4 @@
-const { randomUUID } = require("node:crypto");
+const { randomInt, randomUUID } = require("node:crypto");
 const { createTile, TILE_COSTS } = require("./tiles");
 
 const WIDTH = 5;
@@ -16,6 +16,7 @@ class Plane {
   // Create a plane at its crew's spawn slot with the required starter stations.
   constructor(index = 0) {
     this.id = randomUUID();
+    this.skin = randomInt(1, 4);
     this.x = (index % 6) * 12;
     this.y = Math.floor(index / 6) * 12;
     this.angle = 0;
@@ -128,6 +129,7 @@ class Plane {
   snapshot() {
     return {
       id: this.id,
+      skin: this.skin,
       x: this.x,
       y: this.y,
       angle: this.angle,

@@ -21,7 +21,7 @@ test("capture points spawn inside the circular map", () => {
 });
 
 // A single crew holding the point for its full duration earns the reward.
-test("holding a capture point awards 50 score and moves the point", () => {
+test("holding a capture point awards the configured score and moves the point", () => {
   const game = createGame();
   const team = new Team("Crew", 0);
   game.teams.set(team.id, team);
@@ -29,11 +29,12 @@ test("holding a capture point awards 50 score and moves the point", () => {
   team.plane.x = oldPoint.x;
   team.plane.y = oldPoint.y;
 
-  for (let tick = 0; tick < 59; tick++) game.update();
+  const captureTicks = CapturePoint.DURATION * 1000 / 50;
+  for (let tick = 0; tick < captureTicks - 1; tick++) game.update();
   assert.equal(team.score, 0);
 
   game.update();
-  assert.equal(team.score, 50);
+  assert.equal(team.score, CapturePoint.SCORE);
   assert.notDeepEqual(game.capturePoint, oldPoint);
 });
 

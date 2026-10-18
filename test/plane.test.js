@@ -4,6 +4,14 @@ const Arena = require("../server/arena");
 const Plane = require("../server/plane");
 const Player = require("../server/player");
 
+// The server-selected skin is part of the shared plane snapshot.
+test("plane snapshot includes its server-selected skin", () => {
+  const plane = new Plane();
+
+  assert.ok(plane.skin >= 1 && plane.skin <= 3);
+  assert.equal(plane.snapshot().skin, plane.skin);
+});
+
 // Player movement is world-relative even when the ship itself is rotated.
 test("world-down movement stays world-down on a rotated plane", () => {
   const plane = new Plane();
