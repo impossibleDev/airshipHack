@@ -61,9 +61,9 @@ class CapturePoint {
   }
 }
 
-CapturePoint.RADIUS = 6;
+CapturePoint.RADIUS = 8;
 CapturePoint.SPAWN_CLEARANCE = 4;
-CapturePoint.DURATION = 3;
-CapturePoint.SCORE = 50;
+CapturePoint.DURATION = 15;
+CapturePoint.SCORE = 150;
 
 module.exports = CapturePoint;
