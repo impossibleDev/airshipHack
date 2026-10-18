@@ -1,7 +1,9 @@
-import { drawWorld, screenToTile } from "./plane.js";
+import { drawMiniMap, drawWorld, screenToTile } from "./plane.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+const miniMap = document.getElementById("mini-map");
+const miniMapCtx = miniMap.getContext("2d");
 const socket = io();
 const state = { teams: [], players: [], projectiles: [], playerId: null, teamId: null };
 const keys = new Set();
@@ -180,12 +182,16 @@ function resize() {
   canvas.width = canvas.clientWidth * ratio;
   canvas.height = canvas.clientHeight * ratio;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  miniMap.width = miniMap.clientWidth * ratio;
+  miniMap.height = miniMap.clientHeight * ratio;
+  miniMapCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 window.addEventListener("resize", resize);
 resize();
 
 function frame() {
   drawWorld(ctx, state, canvas, pointer);
+  drawMiniMap(miniMapCtx, state, miniMap, canvas);
   requestAnimationFrame(frame);
 }
 frame();
