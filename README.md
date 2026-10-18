@@ -1,4 +1,4 @@
-# Airship PvP
+# Skybound Showdown
 
 A browser-based multiplayer airship combat game. Crew up, fly your plane, build
 stations, and compete for the capture point.
