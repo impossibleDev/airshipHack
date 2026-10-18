@@ -17,6 +17,7 @@ button, input { font: inherit; }
   position: fixed; z-index: 1; padding: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--cream);
 }
 #team-banner { top: 10px; left: 10px; display: flex; align-items: center; gap: 12px; }
+#team-banner.hidden { display: none; }
 .team-invite { display: flex; align-items: center; gap: 5px; color: var(--cream-dim); font: 10px "Silkscreen", monospace; }
 .team-invite code { color: var(--cream); font: 12px "Silkscreen", monospace; letter-spacing: .08em; }
 #copy-invite { padding: 3px 5px; border: 1px solid var(--line); background: var(--ink-soft); color: var(--cream); font: 9px "Silkscreen", monospace; cursor: pointer; }
