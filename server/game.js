@@ -11,6 +11,7 @@ class Game {
     this.players = new Map();
     this.projectiles = new Map();
     this.emptyTeamTimers = new Map();
+    this.mapCircle = { x: 30, y: 0, radius: 40 };
   }
 
   start() {
@@ -51,6 +52,8 @@ class Game {
         plane: new Plane(this.teams.size),
       };
       this.teams.set(team.id, team);
+      const spawnDistance = Math.hypot(team.plane.x - this.mapCircle.x, team.plane.y - this.mapCircle.y);
+      this.mapCircle.radius = Math.max(this.mapCircle.radius, spawnDistance + 4);
     }
 
     clearTimeout(this.emptyTeamTimers.get(team.id));
@@ -192,6 +195,7 @@ class Game {
             if (player.teamId === team.id) this.notice(player, message);
           }
         },
+        this.mapCircle,
       );
     }
 
@@ -199,7 +203,10 @@ class Game {
     for (const [id, shot] of this.projectiles) {
       shot.x += shot.vx * dt;
       shot.y += shot.vy * dt;
-      if (now >= shot.expiresAt) {
+      if (
+        now >= shot.expiresAt
+        || Math.hypot(shot.x - this.mapCircle.x, shot.y - this.mapCircle.y) > this.mapCircle.radius
+      ) {
         this.projectiles.delete(id);
         continue;
       }
@@ -220,6 +227,7 @@ class Game {
 
   broadcastState() {
     this.io.emit("state", {
+      mapCircle: this.mapCircle,
       teams: [...this.teams.values()].map((team) => ({
         id: team.id,
         name: team.name,

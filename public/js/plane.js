@@ -78,14 +78,25 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
 }
 
 function drawWorld(ctx, state, canvas, pointer) {
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight);
-  gradient.addColorStop(0, "#a9d3d8");
-  gradient.addColorStop(1, "#e4d4ad");
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = "#7da9b4";
   ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
   const ownTeam = state.teams.find((team) => team.id === state.teamId);
   const camera = ownTeam ? ownTeam.plane : { x: 0, y: 0 };
+  if (state.mapCircle) {
+    const circle = state.mapCircle;
+    const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
+    const y = canvas.clientHeight / 2 + (circle.y - camera.y) * TILE_SIZE;
+    const radius = circle.radius * TILE_SIZE;
+    const gradient = ctx.createLinearGradient(0, y - radius, 0, y + radius);
+    gradient.addColorStop(0, "#a9d3d8");
+    gradient.addColorStop(1, "#e4d4ad");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   state.teams.forEach((team, index) =>
     drawPlane(ctx, team, index, camera, canvas, state.players, pointer, state.playerId, state.teamId),
   );
@@ -99,6 +110,23 @@ function drawWorld(ctx, state, canvas, pointer) {
       4, 0, Math.PI * 2,
     );
     ctx.fill();
+  }
+  if (state.mapCircle) {
+    const circle = state.mapCircle;
+    const x = canvas.clientWidth / 2 + (circle.x - camera.x) * TILE_SIZE;
+    const y = canvas.clientHeight / 2 + (circle.y - camera.y) * TILE_SIZE;
+    ctx.save();
+    ctx.strokeStyle = "#183d4b";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(x, y, circle.radius * TILE_SIZE, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "#f7e9c8";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, circle.radius * TILE_SIZE - 3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
   if (ownTeam && pointer.inside) {
     const tile = screenToTile(pointer.x, pointer.y, canvas, ownTeam.plane);
@@ -117,4 +145,85 @@ function drawWorld(ctx, state, canvas, pointer) {
   }
 }
 
-export { drawWorld, screenToTile, TILE_SIZE };
+function drawMiniMap(ctx, state, miniMap, gameCanvas) {
+  const width = miniMap.clientWidth;
+  const height = miniMap.clientHeight;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#183d4b";
+  ctx.fillRect(0, 0, width, height);
+
+  const circle = state.mapCircle;
+  if (!circle) return;
+
+  const radius = Math.min((width - 12) / 2, (height - 12) / 2);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const scale = radius / circle.radius;
+  const mapX = (x) => centerX + (x - circle.x) * scale;
+  const mapY = (y) => centerY + (y - circle.y) * scale;
+
+  ctx.fillStyle = "#b9d4ca";
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.strokeStyle = "#426b6b55";
+  ctx.lineWidth = 1;
+  for (let x = Math.ceil((circle.x - circle.radius) / 12) * 12; x < circle.x + circle.radius; x += 12) {
+    ctx.beginPath();
+    ctx.moveTo(mapX(x), centerY - radius);
+    ctx.lineTo(mapX(x), centerY + radius);
+    ctx.stroke();
+  }
+  for (let y = Math.ceil((circle.y - circle.radius) / 12) * 12; y < circle.y + circle.radius; y += 12) {
+    ctx.beginPath();
+    ctx.moveTo(centerX - radius, mapY(y));
+    ctx.lineTo(centerX + radius, mapY(y));
+    ctx.stroke();
+  }
+
+  const ownTeam = state.teams.find((team) => team.id === state.teamId);
+  if (ownTeam) {
+    const viewWidth = gameCanvas.clientWidth / TILE_SIZE;
+    const viewHeight = gameCanvas.clientHeight / TILE_SIZE;
+    ctx.strokeStyle = "#fffef0";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      mapX(ownTeam.plane.x - viewWidth / 2),
+      mapY(ownTeam.plane.y - viewHeight / 2),
+      viewWidth * scale,
+      viewHeight * scale,
+    );
+  }
+
+  state.teams.forEach((team, index) => {
+    const plane = team.plane;
+    ctx.save();
+    ctx.translate(mapX(plane.x), mapY(plane.y));
+    ctx.rotate(plane.angle);
+    ctx.fillStyle = COLORS[index % COLORS.length];
+    ctx.strokeStyle = team.id === state.teamId ? "#fffef0" : "#183d4b";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(5, 0);
+    ctx.lineTo(-4, -3.5);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(-4, 3.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  });
+  ctx.restore();
+
+  ctx.strokeStyle = "#f7e9c8";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+export { drawMiniMap, drawWorld, screenToTile, TILE_SIZE };
