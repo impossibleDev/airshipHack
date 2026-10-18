@@ -3,6 +3,8 @@ import { drawTile, TILE_SIZE } from "./tiles.js";
 const WIDTH = 5;
 const HEIGHT = 3;
 const COLORS = ["#e9ab54", "#db6f58", "#86a6e7", "#64bb9b", "#bd8ad1", "#d4a15d"];
+const deckImage = new Image();
+deckImage.src = "/images/planeDeck.png";
 
 function screenToTile(x, y, canvas, plane) {
   const dx = (x - canvas.clientWidth / 2) / TILE_SIZE;
@@ -23,12 +25,16 @@ function drawPlane(ctx, team, index, camera, canvas, players, pointer, playerId,
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(plane.angle);
-  ctx.fillStyle = "#ede8d9";
+  if (deckImage.complete && deckImage.naturalWidth) {
+    ctx.drawImage(deckImage, -width / 2, -height / 2, width, height);
+  } else {
+    ctx.fillStyle = "#ede8d9";
+    ctx.fillRect(-width / 2, -height / 2, width, height);
+  }
   ctx.strokeStyle = COLORS[index % COLORS.length];
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.roundRect(-width / 2, -height / 2, width, height, 7);
-  ctx.fill();
+  ctx.rect(-width / 2, -height / 2, width, height);
   ctx.stroke();
 
   const localAim = team.id === ownTeamId && pointer.inside
