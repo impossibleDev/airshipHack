@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cloudline — Airship PvP</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <main id="game-shell">
+      <canvas id="game" aria-label="Airship battle game"></canvas>
+
+      <section id="join-screen" class="join-screen">
+        <form id="join-form" class="join-card">
+          <div class="eyebrow">CLOUDLINE / AIRSHIP COMBAT</div>
+          <h1>Take to the skies.</h1>
+          <p>Build your crew's airship, take the controls, and find the other pilots.</p>
+          <label for="pilot-name">Pilot name</label>
+          <input id="pilot-name" maxlength="18" autocomplete="nickname" placeholder="Sky Pilot" required>
+          <label for="invite-code">Team invitation <span>(optional)</span></label>
+          <input id="invite-code" maxlength="6" autocomplete="off" placeholder="Leave blank to start a crew">
+          <button type="submit">Enter the skies</button>
+          <p id="join-error" class="error-message" role="alert"></p>
+        </form>
+      </section>
+
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">✦</span> CLOUDLINE</div>
+        <div id="team-banner" class="team-banner"></div>
+        <div class="top-hint">WASD move · E interact · F build</div>
+      </header>
+
+      <aside id="build-menu" class="build-menu" aria-label="Build menu">
+        <div class="menu-kicker">WORKSHOP <span>F</span></div>
+        <div id="tile-options" class="tile-options"></div>
+        <div class="menu-tip">Choose a tile, then press <b>F</b> on an empty grid.</div>
+      </aside>
+
+      <aside class="leaderboard">
+        <div class="panel-title">CREWS <span>LIVE</span></div>
+        <div id="leaderboard-list"></div>
+      </aside>
+
+      <div id="status-bar" class="status-bar"></div>
+      <div id="toast" class="toast" role="status"></div>
+
+      <section id="touch-controls" class="touch-controls" aria-label="Touch controls">
+        <button data-key="w">▲</button>
+        <div><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div>
+        <button id="touch-interact">INTERACT</button>
+      </section>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/client.js"></script>
+  </body>
+</html>
