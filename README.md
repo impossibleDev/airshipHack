@@ -44,6 +44,9 @@ joining.
 - If your plane is destroyed, use the **Respawn** button on the game-over
   screen. Your crew and score are kept, but crew members return to the fresh
   plane's deck and its resources and installed tiles reset.
+- The generator powers flight controls and weapons. If it breaks, the plane
+  stops and turrets cannot fire; walk to the generator and press **E** to
+  repair it. Crew can still walk around the deck while power is offline.
 
 Each plane's deck appearance is randomly selected from the three available
 skins.

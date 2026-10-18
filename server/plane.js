@@ -50,6 +50,11 @@ class Plane {
     return null;
   }
 
+  // Ship controls and weapons require at least one running generator.
+  hasPower() {
+    return this.tiles.flat().some((tile) => tile?.type === "generator" && !tile.broken);
+  }
+
   // Validate a placement and charge the crew before creating its tile.
   build(player, x, y, type, notice) {
     const cost = TILE_COSTS[type];
@@ -73,9 +78,10 @@ class Plane {
       }
     }
 
+    const hasPower = this.hasPower();
     const pilot = this.tiles.flat().find((tile) => tile?.type === "pilot" && tile.mountedBy);
     const pilotPlayer = players.find((player) => player.id === pilot?.mountedBy);
-    if (pilotPlayer) {
+    if (pilotPlayer && hasPower) {
       this.angle += (Number(pilotPlayer.input.turn) || 0) * TURN_SPEED * dt;
       const thrust = Number(pilotPlayer.input.thrust) || 0;
       this.vx += Math.cos(this.angle) * thrust * THRUST_ACCELERATION * dt;
@@ -89,6 +95,9 @@ class Plane {
       }
       this.x += this.vx * dt;
       this.y += this.vy * dt;
+    } else if (!hasPower) {
+      this.vx = 0;
+      this.vy = 0;
     }
 
     if (arena) arena.constrainPlane(this, Math.hypot(WIDTH / 2, HEIGHT / 2));
@@ -187,6 +196,7 @@ class Plane {
       health: this.health,
       maxHealth: this.maxHealth,
       resources: this.resources,
+      powered: this.hasPower(),
       tiles: this.tiles.map((row) => row.map((tile) => tile?.snapshot() || null)),
     };
   }

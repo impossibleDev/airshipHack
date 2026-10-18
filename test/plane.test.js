@@ -31,6 +31,31 @@ test("world-down movement stays world-down on a rotated plane", () => {
   assert.ok(worldY > 0);
 });
 
+// A broken generator disables powered flight but leaves crew movement available.
+test("broken generators disable flight and stop the plane", () => {
+  const plane = new Plane();
+  const pilotSeat = plane.getTile(1, 2);
+  const generator = plane.getTile(2, 2);
+  const player = new Player("pilot-1", "Pilot", "crew-1");
+  pilotSeat.mountedBy = player.id;
+  player.mountedTileId = pilotSeat.id;
+  player.setInput({ thrust: 1, turn: 1 });
+  generator.broken = true;
+  plane.vx = 2;
+
+  plane.update(0.05, [player], () => {});
+
+  assert.equal(plane.hasPower(), false);
+  assert.equal(plane.x, 0);
+  assert.equal(plane.angle, 0);
+  assert.equal(plane.vx, 0);
+
+  player.mountedTileId = null;
+  player.setInput({ moveX: 1 });
+  plane.update(0.05, [player], () => {});
+  assert.ok(player.x > 2);
+});
+
 // Arena collision keeps the hull inside the circle and reflects outward speed.
 test("plane hull stays inside the circular map and bounces off the edge", () => {
   const plane = new Plane();

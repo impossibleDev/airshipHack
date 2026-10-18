@@ -137,8 +137,9 @@ function updateHud() {
   }
   const tile = player && team.plane.tiles.flat().find((item) => item?.id === player.mountedTileId);
   const role = tile?.type === "pilot" ? "piloting" : tile?.type === "turret" ? "turret" : "walking";
+  const hasPower = team.plane.powered;
   document.getElementById("status-bar").textContent =
-    `${role} · plane ${Math.ceil(team.plane.health)} HP · ${team.plane.resources} resources`;
+    `${role} · systems ${hasPower ? "online" : "offline"} · plane ${Math.ceil(team.plane.health)} HP · ${team.plane.resources} resources`;
 }
 
 // Ask the server to interact at the pilot's current ship-grid location.

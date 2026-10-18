@@ -9,6 +9,51 @@ const deckImages = [1, 2, 3].map((skin) => {
   image.src = `/images/planeDeck${skin}.png`;
   return image;
 });
+const cloudImages = [1, 2, 3].map((cloud) => {
+  const image = new Image();
+  image.src = `/images/cloud${cloud}.png`;
+  return image;
+});
+const cloudLayers = [
+  { parallax: 0.12, opacity: 0.35, drift: 0.003, size: [100, 190] },
+  { parallax: 0.28, opacity: 0.5, drift: 0.006, size: [140, 240] },
+  { parallax: 0.5, opacity: 0.65, drift: 0.01, size: [180, 290] },
+].map((layer) => ({
+  ...layer,
+  clouds: Array.from({ length: 18 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    image: cloudImages[Math.floor(Math.random() * cloudImages.length)],
+    size: layer.size[0] + Math.random() * (layer.size[1] - layer.size[0]),
+  })),
+}));
+
+function wrap(value, length) {
+  return ((value % length) + length) % length;
+}
+
+// Draw persistent randomized cloud fields with a different camera rate per depth.
+function drawCloudBackground(ctx, canvas, camera) {
+  const width = Math.max(canvas.clientWidth * 2, 1800);
+  const height = Math.max(canvas.clientHeight * 2, 1200);
+  const now = performance.now();
+
+  for (const layer of cloudLayers) {
+    ctx.save();
+    ctx.globalAlpha = layer.opacity;
+    for (const cloud of layer.clouds) {
+      if (!cloud.image.complete || !cloud.image.naturalWidth) continue;
+      const x = wrap(cloud.x * width - camera.x * TILE_SIZE * layer.parallax + now * layer.drift, width);
+      const y = wrap(cloud.y * height - camera.y * TILE_SIZE * layer.parallax + now * layer.drift * 0.35, height);
+      for (const offsetX of [-width, 0, width]) {
+        for (const offsetY of [-height, 0, height]) {
+          ctx.drawImage(cloud.image, x + offsetX, y + offsetY, cloud.size, cloud.size);
+        }
+      }
+    }
+    ctx.restore();
+  }
+}
 
 // Convert a canvas point into a tile coordinate, undoing the plane's rotation.
 function screenToTile(x, y, canvas, plane) {
@@ -109,6 +154,7 @@ function drawWorld(ctx, state, canvas, pointer) {
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
   }
+  drawCloudBackground(ctx, canvas, camera);
 
   // Render teams in world coordinates relative to the local crew's camera.
   state.teams.forEach((team, index) =>

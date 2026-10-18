@@ -174,6 +174,10 @@ class Game {
     const station = team.plane.findTile(player.mountedTileId);
     const now = Date.now();
     if (!station || station.tile.type !== "turret" || !player.canFire(now)) return;
+    if (!team.plane.hasPower()) {
+      this.notice(player, "Weapons offline. Repair a generator to restore ship power.");
+      return;
+    }
 
     player.recordShot(now);
     const start = team.plane.tileToWorld(station.x, station.y);

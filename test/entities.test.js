@@ -5,6 +5,7 @@ const Game = require("../server/game");
 const Player = require("../server/player");
 const Projectile = require("../server/projectile");
 const Team = require("../server/team");
+const { createTile } = require("../server/tiles");
 
 // Inputs are clamped and snapshots expose only the client's required fields.
 test("player owns input normalization and exports a client snapshot", () => {
@@ -107,4 +108,29 @@ test("respawning restores a destroyed plane and resets its crew", () => {
   assert.deepEqual(player.input, {});
   assert.equal(player.x, 2);
   assert.equal(player.y, 2);
+});
+
+// Turrets cannot fire without generator power and the pilot gets an explanation.
+test("broken generators disable turret fire", () => {
+  const notices = [];
+  const game = new Game({
+    emit() {},
+    to() {
+      return { emit: (event, message) => notices.push(message) };
+    },
+  });
+  const team = new Team("Crew", 0);
+  const player = new Player("pilot-1", "Pilot", team.id);
+  const turret = createTile("turret");
+  team.plane.tiles[1][3] = turret;
+  team.plane.getTile(2, 2).broken = true;
+  turret.mountedBy = player.id;
+  player.mountedTileId = turret.id;
+  game.teams.set(team.id, team);
+  game.players.set(player.id, player);
+
+  game.fire({ id: player.id }, { x: 4, y: 1 });
+
+  assert.equal(game.projectiles.size, 0);
+  assert.deepEqual(notices, ["Weapons offline. Repair a generator to restore ship power."]);
 });
