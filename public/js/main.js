@@ -1,4 +1,5 @@
 import { drawMiniMap, drawWorld, screenToTile } from "./plane.js";
+import { CombatFeedback } from "./combat-feedback.js";
 
 // Set up the visible canvases and the real-time connection to the game server.
 const canvas = document.getElementById("game");
@@ -6,6 +7,10 @@ const ctx = canvas.getContext("2d");
 const miniMap = document.getElementById("mini-map");
 const miniMapCtx = miniMap.getContext("2d");
 const socket = io();
+const combatFeedback = new CombatFeedback(
+  document.getElementById("combat-feedback"),
+  document.getElementById("damage-flash"),
+);
 const state = { teams: [], players: [], projectiles: [], playerId: null, teamId: null };
 // Keep held keyboard controls and pointer position between browser events.
 const keys = new Set();
@@ -99,6 +104,9 @@ socket.on("joined", ({ playerId, teamId, inviteCode: code }) => {
   reconnecting = false;
   showJoinError("");
   document.getElementById("join-screen").classList.add("hidden");
+  if (!localStorage.getItem("airship-onboarding-dismissed")) {
+    setOnboardingVisible(true);
+  }
 });
 // Replace local world state with authoritative server updates.
 socket.on("state", (next) => {
@@ -106,9 +114,20 @@ socket.on("state", (next) => {
   updateHud();
 });
 socket.on("notice", notify);
+socket.on("combat-feedback", (feedback) => combatFeedback.show(feedback));
 document.getElementById("respawn-button").addEventListener("click", () => {
   socket.emit("respawn");
 });
+document.getElementById("help-button").addEventListener("click", () => setOnboardingVisible(true));
+document.getElementById("close-onboarding").addEventListener("click", () => {
+  localStorage.setItem("airship-onboarding-dismissed", "true");
+  setOnboardingVisible(false);
+});
+
+function setOnboardingVisible(visible) {
+  document.getElementById("onboarding").classList.toggle("hidden", !visible);
+  document.getElementById("help-button").setAttribute("aria-expanded", String(visible));
+}
 
 // Refresh crew details, leaderboard scores, and the player's current role.
 function updateHud() {

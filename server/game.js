@@ -257,10 +257,28 @@ class Game {
 
       for (const team of this.teams.values()) {
         if (team.id !== shot.teamId) {
+          const previousHealth = team.plane.health;
           const destroyed = team.receiveProjectile(shot, 8);
           if (destroyed === null) continue;
-          if (destroyed) {
+          if (destroyed === "protected") {
+            this.sendCombatFeedback(team, { type: "protected" });
             const attacker = this.teams.get(shot.teamId);
+            if (attacker) this.sendCombatFeedback(attacker, { type: "blocked" });
+            this.projectiles.delete(id);
+            break;
+          }
+          this.sendCombatFeedback(team, {
+            type: "damage",
+            amount: previousHealth - team.plane.health,
+          });
+          const attacker = this.teams.get(shot.teamId);
+          if (attacker) {
+            this.sendCombatFeedback(attacker, {
+              type: "hit",
+              amount: previousHealth - team.plane.health,
+            });
+          }
+          if (destroyed) {
             if (attacker) attacker.awardScore(KILL_SCORE);
           }
           this.projectiles.delete(id);
@@ -284,8 +302,37 @@ class Game {
         if (impactSpeed === null || impactSpeed < MIN_COLLISION_DAMAGE_SPEED) continue;
 
         const damage = Math.round(impactSpeed * COLLISION_DAMAGE_PER_SPEED);
-        if (first.takeDamage(damage)) second.awardScore(KILL_SCORE);
-        if (second.takeDamage(damage)) first.awardScore(KILL_SCORE);
+        const firstHealth = first.plane.health;
+        const secondHealth = second.plane.health;
+        const firstDestroyed = first.takeDamage(damage);
+        const secondDestroyed = second.takeDamage(damage);
+        if (first.plane.health < firstHealth) {
+          this.sendCombatFeedback(first, {
+            type: "impact",
+            amount: firstHealth - first.plane.health,
+          });
+        } else if (first.isSpawnProtected()) {
+          this.sendCombatFeedback(first, { type: "protected" });
+        }
+        if (second.plane.health < secondHealth) {
+          this.sendCombatFeedback(second, {
+            type: "impact",
+            amount: secondHealth - second.plane.health,
+          });
+        } else if (second.isSpawnProtected()) {
+          this.sendCombatFeedback(second, { type: "protected" });
+        }
+        if (firstDestroyed) second.awardScore(KILL_SCORE);
+        if (secondDestroyed) first.awardScore(KILL_SCORE);
+      }
+    }
+  }
+
+  // Send a short combat cue to every connected pilot in a crew.
+  sendCombatFeedback(team, feedback) {
+    for (const player of this.players.values()) {
+      if (player.teamId === team.id) {
+        this.io.to(player.id).emit("combat-feedback", feedback);
       }
     }
   }
