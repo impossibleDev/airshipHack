@@ -1,8 +1,9 @@
 // Present brief, consistent feedback for combat events received from the server.
 class CombatFeedback {
-  constructor(messageElement, flashElement) {
+  constructor(messageElement, flashElement, soundEffects) {
     this.messageElement = messageElement;
     this.flashElement = flashElement;
+    this.soundEffects = soundEffects;
     this.messageTimeout = null;
     this.flashTimeout = null;
   }
@@ -12,11 +13,17 @@ class CombatFeedback {
       damage: `HULL HIT -${amount}`,
       hit: `HIT +${amount}`,
       impact: `COLLISION -${amount}`,
+      capture: "CAPTURE SECURED",
       protected: "SPAWN SHIELD",
       blocked: "ENEMY SHIELDED",
     };
     const message = messages[type];
     if (!message) return;
+    if (type === "hit" || type === "damage" || type === "impact") {
+      this.soundEffects.play("collision");
+    } else if (type === "capture") {
+      this.soundEffects.play("capture");
+    }
 
     clearTimeout(this.messageTimeout);
     this.messageElement.textContent = message;

@@ -1,5 +1,6 @@
 import { drawMiniMap, drawWorld, screenToTile } from "./plane.js";
 import { CombatFeedback } from "./combat-feedback.js";
+import { SoundEffects } from "./sound-effects.js";
 
 // Set up the visible canvases and the real-time connection to the game server.
 const canvas = document.getElementById("game");
@@ -7,9 +8,11 @@ const ctx = canvas.getContext("2d");
 const miniMap = document.getElementById("mini-map");
 const miniMapCtx = miniMap.getContext("2d");
 const socket = io();
+const soundEffects = new SoundEffects();
 const combatFeedback = new CombatFeedback(
   document.getElementById("combat-feedback"),
   document.getElementById("damage-flash"),
+  soundEffects,
 );
 const state = { teams: [], players: [], projectiles: [], playerId: null, teamId: null };
 // Keep held keyboard controls and pointer position between browser events.
@@ -115,6 +118,7 @@ socket.on("state", (next) => {
 });
 socket.on("notice", notify);
 socket.on("combat-feedback", (feedback) => combatFeedback.show(feedback));
+socket.on("sound-effect", (effect) => soundEffects.play(effect));
 document.getElementById("respawn-button").addEventListener("click", () => {
   socket.emit("respawn");
 });

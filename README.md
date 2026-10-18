@@ -48,6 +48,7 @@ joining.
   a blue shield around the ship. Combat feedback shows hull damage, confirmed
   hits, blocked shots, and collision damage. Open **Controls** in-game to
   review the controls and basic objectives.
+- Turret shots, combat hits and impacts, and capture awards have sound effects.
 - The generator powers flight controls and weapons. If it breaks, the plane
   stops and turrets cannot fire; walk to the generator and press **E** to
   repair it. Crew can still walk around the deck while power is offline.

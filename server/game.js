@@ -200,6 +200,7 @@ class Game {
     const angle = Math.atan2(target.y - start.y, target.x - start.x);
     const projectile = new Projectile(start.x, start.y, angle, team.id);
     this.projectiles.set(projectile.id, projectile);
+    this.sendTeamSound(team, "shoot");
   }
 
   // Free the player's station and schedule removal of an empty crew.
@@ -348,7 +349,17 @@ class Game {
         this.notice(player, `Capture point secured! +${CapturePoint.SCORE} score.`);
       }
     }
+    this.sendCombatFeedback(team, { type: "capture" });
     this.capturePoint = this.createCapturePoint();
+  }
+
+  // Play an accepted action's sound for every connected crew member.
+  sendTeamSound(team, effect) {
+    for (const player of this.players.values()) {
+      if (player.teamId === team.id) {
+        this.io.to(player.id).emit("sound-effect", effect);
+      }
+    }
   }
 
   // Send serializable entity snapshots rather than server-side objects.
