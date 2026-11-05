@@ -1,7 +1,10 @@
-# Airship PvP
+# Skybound showdown
 
 A browser-based multiplayer airship combat game. Crew up, fly your plane, build
 stations, and compete for the capture point.
+
+## Live Game Server
+https://skybound-showdown.onrender.com/
 
 ## Run locally
 
@@ -24,38 +27,6 @@ To play with others, they need to connect to the same running server. Enter
 your crew's invite code in the **Team code** field to join that crew; leave it
 blank to start a new crew. The invite code is shown in the team banner after
 joining.
-
-## How to play
-
-- Enter a pilot name and select **Join game**.
-- Walk around your plane with **WASD**.
-- Press **E** near the pilot seat or a turret to use it. Press **E** again to
-  leave your current station.
-- While piloting, hold **W** to accelerate and use **A/D** to turn. **S**
-  applies reverse thrust.
-- While mounted at a turret, aim with the mouse and click to fire.
-- While walking, select a tile from the build menu (or press **1** for turret,
-  **2** for wall, or **3** for generator). Point at an empty spot on your plane
-  and press **F** to build it. Building costs resources; your balance and plane
-  health are shown in the status bar.
-- Fly into the marked capture area and hold it to earn crew score. Enemy ship
-  collisions cause impact damage to both planes, with harder impacts dealing
-  more damage. Avoid enemy fire and watch the crew leaderboard.
-- If your plane is destroyed, use the **Respawn** button on the game-over
-  screen. Your crew and score are kept, but crew members return to the fresh
-  plane's deck and its resources and installed tiles reset.
-- New and respawned planes receive 5 seconds of spawn protection, indicated by
-  a blue shield around the ship. Combat feedback shows hull damage, confirmed
-  hits, blocked shots, and collision damage. Open **Controls** in-game to
-  review the controls and basic objectives.
-- Turret shots, combat hits and impacts, and capture awards have sound effects.
-- The generator powers flight controls and weapons. If it breaks, the plane
-  stops and turrets cannot fire; walk to the generator and press **E** to
-  repair it. Crew can still walk around the deck while power is offline.
-- Wall tiles reflect turret pellets and can withstand 10 hits before breaking.
-
-Each plane's deck appearance is randomly selected from the three available
-skins.
 
 ## Tests
 
